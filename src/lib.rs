@@ -1,7 +1,19 @@
+mod builder;
+mod charset;
+mod error;
+mod font;
+mod parse;
+mod tagged_attributes;
+mod util;
+
 #[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+mod tests;
+
+pub mod binary;
+pub mod text;
+#[cfg(feature = "xml")]
+pub mod xml;
+
+pub use charset::*;
+pub use error::{Error, Result};
+pub use font::*;
