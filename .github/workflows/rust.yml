@@ -64,8 +64,8 @@ jobs:
         echo "CARGO=cross" >> $GITHUB_ENV
         echo "TARGET=--target ${{ matrix.target }}" >> $GITHUB_ENV
     - name: Cargo build
-      run: ${{ env.CARGO }} build --verbose ${{ env.TARGET }}
+      run: ${{ env.CARGO }} build --features xml --verbose ${{ env.TARGET }}
     - name: Cargo doc
-      run: ${{ env.CARGO }} doc --verbose ${{ env.TARGET }}
+      run: ${{ env.CARGO }} doc --features xml --verbose ${{ env.TARGET }}
     - name: Cargo test
-      run: ${{ env.CARGO }} test --verbose ${{ env.TARGET }}
+      run: ${{ env.CARGO }} test --features xml --verbose ${{ env.TARGET }}
