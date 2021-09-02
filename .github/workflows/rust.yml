@@ -1,0 +1,71 @@
+name: Rust
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build:
+    name: Build
+    env:
+      CARGO: cargo
+      TARGET:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build:
+        - arm
+        - ubuntu
+        - ubuntu-32
+        - mips
+        - macos
+        - win-msvc
+        - win-gnu
+        include:
+        - build: arm
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+        - build: ubuntu
+          os: ubuntu-latest
+          rust: stable
+        - build: ubuntu-32
+          os: ubuntu-latest
+          rust: stable
+          target: i686-unknown-linux-gnu
+        - build: mips
+          os: ubuntu-latest
+          rust: stable
+          target: mips64-unknown-linux-gnuabi64
+        - build: macos
+          os: macos-latest
+          rust: stable
+        - build: win-msvc
+          os: windows-latest
+          rust: stable
+        - build: win-gnu
+          os: windows-latest
+          rust: stable-x86_64-gnu
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        profile: minimal
+        override: true
+    - name: Install cross
+      if: matrix.target != ''
+      run: |
+        cargo install cross
+        echo "CARGO=cross" >> $GITHUB_ENV
+        echo "TARGET=--target ${{ matrix.target }}" >> $GITHUB_ENV
+    - name: Cargo build
+      run: ${{ env.CARGO }} build --verbose ${{ env.TARGET }}
+    - name: Cargo doc
+      run: ${{ env.CARGO }} doc --verbose ${{ env.TARGET }}
+    - name: Cargo test
+      run: ${{ env.CARGO }} test --verbose ${{ env.TARGET }}
