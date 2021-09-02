@@ -459,5 +459,28 @@ mod tests {
     tkvm!(newline_null_crlflf, ["", "\r\n\n"], [1, 3]);
     tkvm!(newline_null_lfcrlf, ["", "\n\r\n"], [1, 3]);
 
-    // TODO fuzz
+    // Mutation tests. We expect errors. We do not expect panics.
+    #[test]
+    fn mutate() {
+        let mut bytes = "T1 K1=V1 K2=V2 K3=\"V3\"\r\nT2 K1=V1\r\n".as_bytes().to_vec();
+        for i in 0..bytes.len() {
+            let b = bytes[i];
+            for m in 0..=255 {
+                bytes[i] = m;
+                let mut tkv = TaggedAttributes::from_bytes(&bytes);
+                'out: loop {
+                    match tkv.tag() {
+                        Ok(Some(_)) => loop {
+                            match tkv.key_value() {
+                                Ok(Some(_)) => continue,
+                                Ok(None) | Err(_) => break 'out,
+                            }
+                        },
+                        Ok(None) | Err(_) => break 'out,
+                    }
+                }
+            }
+            bytes[i] = b;
+        }
+    }
 }
