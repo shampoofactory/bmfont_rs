@@ -21,10 +21,7 @@ impl<'a> Tag<'a> {
 impl<'a> Tags<'a> for TaggedAttributes<'a> {
     fn next_tag(&mut self) -> crate::Result<Option<Tag<'a>>> {
         match self.tag() {
-            Ok(u) => Ok(match u {
-                Some(tag) => Some(Tag::new(tag, Some(self.line()))),
-                None => None,
-            }),
+            Ok(u) => Ok(u.map(|tag| Tag::new(tag, Some(self.line())))),
             Err(err) => {
                 Err(crate::Error::Parse { line: Some(self.line()), err: format!("tags: {}", err) })
             }

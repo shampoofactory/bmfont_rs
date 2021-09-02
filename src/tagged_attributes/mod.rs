@@ -1,11 +1,11 @@
 use std::fmt;
 
-const CR: u8 = '\r' as u8;
-const EQ: u8 = '=' as u8;
-const LF: u8 = '\n' as u8;
-const QT: u8 = '"' as u8;
-const SP: u8 = ' ' as u8;
-const TB: u8 = '\t' as u8;
+const CR: u8 = b'\r';
+const EQ: u8 = b'=';
+const LF: u8 = b'\n';
+const QT: u8 = b'"';
+const SP: u8 = b' ';
+const TB: u8 = b'\t';
 
 /// Tagged attribute parser.
 ///
@@ -79,7 +79,7 @@ impl<'a> TaggedAttributes<'a> {
             let tail = self.value_tail_wn()?;
             return Ok(Some(&self.bytes[head..tail]));
         }
-        return Ok(None);
+        Ok(None)
     }
 
     #[inline(always)]

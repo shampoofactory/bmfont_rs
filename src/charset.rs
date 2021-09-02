@@ -142,7 +142,7 @@ impl From<&str> for Charset {
             "RUSSIAN" => Charset::Tagged(204),
             "MAC" => Charset::Tagged(77),
             "BALTIC" => Charset::Tagged(186),
-            src => match u8::from_str_radix(src, 10) {
+            src => match src.parse::<u8>() {
                 Ok(u) => Charset::Tagged(u),
                 Err(_) => Charset::Undefined(src.to_owned()),
             },

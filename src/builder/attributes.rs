@@ -22,10 +22,7 @@ impl<'a> Attribute<'a> {
 impl<'a> Attributes<'a> for TaggedAttributes<'a> {
     fn next_attribute(&mut self) -> crate::Result<Option<Attribute<'a>>> {
         match self.key_value() {
-            Ok(u) => Ok(match u {
-                Some((key, value)) => Some(Attribute::new(key, value, Some(self.line()))),
-                None => None,
-            }),
+            Ok(u) => Ok(u.map(|(key, value)| Attribute::new(key, value, Some(self.line())))),
             Err(err) => Err(crate::Error::Parse {
                 line: Some(self.line()),
                 err: format!("attributes: {}", err),

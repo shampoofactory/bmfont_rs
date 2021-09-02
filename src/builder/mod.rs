@@ -35,8 +35,8 @@ impl FontBuilder {
                 return Err(Error::InvalidKerningCount { specified, realized });
             }
         }
-        let info = self.info.take().ok_or_else(|| Error::NoInfoBlock)?;
-        let common = self.common.take().ok_or_else(|| Error::NoCommonBlock)?;
+        let info = self.info.take().ok_or(Error::NoInfoBlock)?;
+        let common = self.common.take().ok_or(Error::NoCommonBlock)?;
         Ok(Font::new(info, common, self.pages, self.chars, self.kernings))
     }
 
@@ -44,7 +44,7 @@ impl FontBuilder {
     where
         A: Attributes<'a>,
     {
-        if let Some(_) = &self.info {
+        if self.info.is_some() {
             Err(Error::DuplicateTag { line, tag: "info".to_owned() })
         } else {
             self.info = Some(Info::load(attributes)?);
@@ -60,7 +60,7 @@ impl FontBuilder {
     where
         A: Attributes<'a>,
     {
-        if let Some(_) = &self.common {
+        if self.common.is_some() {
             Err(Error::DuplicateTag { line, tag: "common".to_owned() })
         } else {
             self.common = Some(Common::load(attributes)?);
@@ -93,7 +93,7 @@ impl FontBuilder {
     where
         A: Attributes<'a>,
     {
-        if let Some(_) = self.char_count {
+        if self.char_count.is_some() {
             Err(Error::DuplicateCharCount { line })
         } else {
             Count::load(attributes).map(|Count { count }| {
@@ -107,7 +107,7 @@ impl FontBuilder {
     where
         A: Attributes<'a>,
     {
-        if let Some(_) = self.kerning_count {
+        if self.kerning_count.is_some() {
             Err(Error::DuplicateKerningCount { line })
         } else {
             Count::load(attributes).map(|Count { count }| {

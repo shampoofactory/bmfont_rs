@@ -57,8 +57,9 @@ macro_rules! pack {
                 let dst = dst.as_mut_slice();
                 $(
                     let bytes = $u.to_le_bytes();
-                    (&mut dst[off..off + size_of_val($u)]).copy_from_slice(bytes.as_ref());
-                    off += size_of_val($u);
+                    let end = off + size_of_val($u);
+                    (&mut dst[off..end]).copy_from_slice(bytes.as_ref());
+                    off = end;
                 )*
             }
         }
@@ -83,8 +84,9 @@ macro_rules! unpack {
             Some((
                     $({
                         let mut bytes = [0u8; size_of::<$u>()];
-                        bytes.as_mut().copy_from_slice(&src[off..off + size_of::<$u>()]);
-                        off += size_of::<$u>();
+                        let end = off + size_of::<$u>();
+                        bytes.as_mut().copy_from_slice(&src[off..end]);
+                        off = end;
                         <$u>::from_le_bytes(bytes)
                     },)*
                 ))

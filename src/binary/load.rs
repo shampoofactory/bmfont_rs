@@ -49,8 +49,8 @@ impl<'a> Assist<'a> {
     }
 
     fn build(mut self) -> crate::Result<Font> {
-        let info = self.info.take().ok_or_else(|| crate::Error::NoInfoBlock)?;
-        let common = self.common.take().ok_or_else(|| crate::Error::NoCommonBlock)?;
+        let info = self.info.take().ok_or(crate::Error::NoInfoBlock)?;
+        let common = self.common.take().ok_or(crate::Error::NoCommonBlock)?;
         Ok(Font::new(info, common, self.pages, self.chars, self.kernings))
     }
 

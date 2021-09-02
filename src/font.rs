@@ -46,6 +46,7 @@ pub struct Char {
 }
 
 impl Char {
+    #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn new(
         id: u32,
@@ -84,6 +85,7 @@ pub struct Common {
 }
 
 impl Common {
+    #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn new(
         line_height: u16,
@@ -151,6 +153,7 @@ pub struct Info {
 }
 
 impl Info {
+    #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn new(
         face: String,

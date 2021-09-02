@@ -15,9 +15,10 @@ pub trait Parse: Sized {
 }
 
 impl<T: Copy + Default + Parse, const N: usize> Parse for [T; N] {
+    #[allow(clippy::needless_range_loop)]
     fn parse(src: &str) -> ParseResult<Self> {
         let mut arr = [T::default(); N];
-        let mut ts = src.split_terminator(",");
+        let mut ts = src.split_terminator(',');
         for i in 0..N {
             if let Some(t) = ts.next() {
                 arr[i] = T::parse(t.trim())?;
@@ -68,7 +69,7 @@ impl Parse for u8 {
 
 impl Parse for bool {
     fn parse(src: &str) -> ParseResult<Self> {
-        u32::from_str_radix(src, 10).map(|u| u != 0).map_err(Into::into)
+        src.parse::<u32>().map(|u| u != 0).map_err(Into::into)
     }
 }
 
