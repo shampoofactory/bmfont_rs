@@ -200,12 +200,12 @@ pub struct Page {
     pub file: String,
 }
 
-impl Page {
-    #[inline(always)]
-    pub fn new(id: u16, file: String) -> Self {
-        Self { id, file }
-    }
-}
+// impl Page {
+//     #[inline(always)]
+//     pub fn new(id: u16, file: String) -> Self {
+//         Self { id, file }
+//     }
+// }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(

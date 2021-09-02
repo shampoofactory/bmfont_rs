@@ -16,4 +16,4 @@ pub mod xml;
 
 pub use charset::*;
 pub use error::{Error, Result};
-pub use font::*;
+pub use font::{Char, Chnl, Common, Font, Info, Kerning, Packing, Padding, Spacing};
