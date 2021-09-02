@@ -397,4 +397,5 @@ mod tests {
     tkvm!(newline_null_lfcrlf, ["", "\n\r\n"], [1, 3]);
 
     // TODO invalid operations
+    // TODO fuzz
 }
