@@ -230,7 +230,7 @@ impl<'a> TaggedAttributes<'a> {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
     BadCRLF,
     ExpectedEq,
@@ -284,10 +284,14 @@ mod tests {
 
     macro_rules! key_eq_value {
         ($name:ident, $bytes:expr) => {
+            key_eq_value! { $name, $bytes, b"KEY", b"VALUE" }
+        };
+
+        ($name:ident, $bytes:expr, $key:expr, $value:expr) => {
             #[test]
             fn $name() -> Result<()> {
                 let mut tkv = TaggedAttributes::from_bytes($bytes);
-                assert_eq!(tkv.key_value()?, Some((b"KEY".as_ref(), b"VALUE".as_ref())));
+                assert_eq!(tkv.key_value()?, Some(($key.as_ref(), $value.as_ref())));
                 assert_eq!(tkv.line(), 1);
                 assert_eq!(tkv.key_value()?, None,);
                 assert_eq!(tkv.line(), 1);
@@ -310,17 +314,76 @@ mod tests {
     key_eq_value!(key_eq_value_wn_crlf, b"KEY=VALUE\r\n");
 
     // Key value pair (double quote bound) extraction tests
-    key_eq_value!(key_eq_value_qt, b"KEY=\"VALUE\"");
-    key_eq_value!(sp_key_eq_value_qt, b" KEY=\"VALUE\"");
-    key_eq_value!(tb_key_eq_value_qt, b"\tKEY=\"VALUE\"");
-    key_eq_value!(key_sp_eq_value_qt, b"KEY =\"VALUE\"");
-    key_eq_value!(key_tb_eq_value_qt, b"KEY\t=\"VALUE\"");
-    key_eq_value!(key_eq_sp_value_qt, b" KEY= \"VALUE\"");
-    key_eq_value!(key_eq_tb_value_qt, b"KEY=\t\"VALUE\"");
-    key_eq_value!(key_eq_value_qt_sp, b"KEY=\"VALUE\" ");
-    key_eq_value!(key_eq_value_qt_tb, b"KEY=\"VALUE\"\t");
-    key_eq_value!(key_eq_value_qt_lf, b"KEY=\"VALUE\"\n");
-    key_eq_value!(key_eq_value_qt_crlf, b"KEY=\"VALUE\"\r\n");
+    key_eq_value!(key_eq_qt_value_qt, b"KEY=\"VALUE\"");
+    key_eq_value!(sp_key_eq_qt_value_qt, b" KEY=\"VALUE\"");
+    key_eq_value!(tb_key_eq_qt_value_qt, b"\tKEY=\"VALUE\"");
+    key_eq_value!(key_sp_eq_qt_value_qt, b"KEY =\"VALUE\"");
+    key_eq_value!(key_tb_eq_qt_value_qt, b"KEY\t=\"VALUE\"");
+    key_eq_value!(key_eq_sp_qt_value_qt, b" KEY= \"VALUE\"");
+    key_eq_value!(key_eq_tb_qt_value_qt, b"KEY=\t\"VALUE\"");
+    key_eq_value!(key_eq_qt_value_qt_sp, b"KEY=\"VALUE\" ");
+    key_eq_value!(key_eq_qt_value_qt_tb, b"KEY=\"VALUE\"\t");
+    key_eq_value!(key_eq_qt_value_qt_lf, b"KEY=\"VALUE\"\n");
+    key_eq_value!(key_eq_qt_value_qt_crlf, b"KEY=\"VALUE\"\r\n");
+
+    // Key value pair (key quote/ eq variation) extraction tests
+    key_eq_value!(key_qt_eq_qt_value_qt, b"KEY\"=\"VALUE\"", b"KEY\"", b"VALUE");
+    key_eq_value!(qt_key_eq_qt_value_qt, b"\"KEY=\"VALUE\"", b"\"KEY", b"VALUE");
+    key_eq_value!(qt_key_qt_eq_qt_value_qt, b"\"KEY\"=\"VALUE\"", b"\"KEY\"", b"VALUE");
+    key_eq_value!(eq_key_eq_qt_value_qt, b"=KEY=\"VALUE\"", b"=KEY", b"VALUE");
+
+    // Key value pair (value quote/ eq variation) extraction tests
+    key_eq_value!(key_eq_value_qt, b"KEY=VALUE\"", b"KEY", b"VALUE\"");
+    key_eq_value!(key_eq_eq, b"KEY==", b"KEY", b"=");
+    key_eq_value!(key_eq_qt_eq_qt, b"KEY=\"=\"", b"KEY", b"=");
+    key_eq_value!(key_eq_qt_qt, b"KEY=\"\"", b"KEY", b"");
+
+    macro_rules! key_value_err {
+        ($name:ident, $bytes:expr) => {
+            key_eq_value! { $name, $bytes, b"KEY", b"VALUE" }
+        };
+
+        ($name:ident, $bytes:expr, $err:expr) => {
+            #[test]
+            fn $name() {
+                let mut tkv = TaggedAttributes::from_bytes($bytes);
+                match tkv.key_value() {
+                    Err(err) => assert_eq!(err, $err),
+                    Ok(_) => panic!("expect error: {}", $err),
+                }
+            }
+        };
+    }
+
+    // Key value pair errors
+    key_value_err!(key, b"KEY", Error::UnexpectedEndOfFile);
+    key_value_err!(key_lf, b"KEY\n", Error::UnexpectedEndOfLine);
+    key_value_err!(key_crlf, b"KEY\r\n", Error::UnexpectedEndOfLine);
+    key_value_err!(eq_value, b"=VALUE", Error::UnexpectedEndOfFile);
+    key_value_err!(eq_value_lf, b"=VALUE\n", Error::UnexpectedEndOfLine);
+    key_value_err!(eq_value_crlf, b"=VALUE\r\n", Error::UnexpectedEndOfLine);
+    key_value_err!(key_eq, b"KEY=", Error::UnexpectedEndOfLine);
+    key_value_err!(key_eq_qt, b"KEY=\"", Error::UnexpectedEndOfFile);
+    key_value_err!(key_eq_qt_lf, b"KEY=\"\n", Error::UnexpectedEndOfLine);
+    key_value_err!(key_eq_qt_crlf, b"KEY=\"\r\n", Error::UnexpectedEndOfLine);
+    key_value_err!(key_eq_qt_value, b"KEY=\"VALUE", Error::UnexpectedEndOfFile);
+    key_value_err!(key_eq_qt_value_lf_qt, b"KEY=\"VALUE\n", Error::UnexpectedEndOfLine);
+    key_value_err!(key_eq_qt_value_crlf_qt, b"KEY=\"VALUE\r\n", Error::UnexpectedEndOfLine);
+    key_value_err!(key_eq_value_cr, b"KEY=VALUE\r", Error::BadCRLF);
+
+    #[test]
+    fn qt_key() -> Result<()> {
+        let mut tkv = TaggedAttributes::from_bytes(b"\"KEY=VALUE");
+        assert_eq!(tkv.key_value()?, Some(("\"KEY".as_ref(), "VALUE".as_ref())));
+        Ok(())
+    }
+
+    #[test]
+    fn key_qt() -> Result<()> {
+        let mut tkv = TaggedAttributes::from_bytes(b"\"KEY=VALUE");
+        assert_eq!(tkv.key_value()?, Some(("\"KEY".as_ref(), "VALUE".as_ref())));
+        Ok(())
+    }
 
     macro_rules! tagged_attribute {
         ($name:ident, $bytes:expr, $($v:expr),+) => {
@@ -396,6 +459,5 @@ mod tests {
     tkvm!(newline_null_crlflf, ["", "\r\n\n"], [1, 3]);
     tkvm!(newline_null_lfcrlf, ["", "\n\r\n"], [1, 3]);
 
-    // TODO invalid operations
     // TODO fuzz
 }
