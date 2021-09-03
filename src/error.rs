@@ -5,34 +5,71 @@ use crate::Charset;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// BMFont errors.
+///
+/// Describes the various errors that may occur when encoding/ decoding/ manipulating BMFont data
+/// structures.
+///
+/// The [Internal](Error::Internal) variant indicates malfunctioning crate code and should be
+/// reported at the project repository home [here](https://github.com/shampoofactory/lzfse_rust/issues).
 #[derive(Debug)]
 pub enum Error {
+    /// Duplicate character count (decode only).
     DuplicateCharCount { line: Option<usize> },
+    /// Duplicate character id.
     DuplicateChar { line: Option<usize>, id: u32 },
+    /// Duplicate common block (decode only).
     DuplicateCommonBlock { line: Option<usize> },
+    /// Duplicate info block (decode only).
     DuplicateInfoBlock { line: Option<usize> },
+    /// Duplicate kerning count (decode only).
     DuplicateKerningCount { line: Option<usize> },
+    /// Duplicate kerning pair entry.
     DuplicateKerningPair { line: Option<usize>, first: u32, second: u32 },
+    /// Duplicate tagged key value (decode only).
     DuplicateKey { line: Option<usize>, key: String },
+    /// Duplicate page id (decode only).
     DuplicatePage { line: Option<usize>, id: u32 },
+    /// Duplicate tag (decode only).
     DuplicateTag { line: Option<usize>, tag: String },
+    /// Not all the specified page file names are equal, as stated in the BMFont binary
+    /// specification.
     IncongruentPageFileLen { line: Option<usize> },
+    /// The input is not a valid BMFont binary file (decode only).
     InvalidBinary { magic_bytes: u32 },
+    /// Invalid binary block (decode only).
     InvalidBinaryBlock { id: u8 },
+    /// Invalid binary block length (decode only).
     InvalidBinaryBlockLen { id: u8, len: u32 },
+    /// Invalid binary block character set encoding.
     InvalidBinaryEncoding { unicode: bool, charset: Charset },
+    /// Invalid binary version.
     InvalidBinaryVersion { version: u8 },
+    /// The specified character count does not match the number of specified characters
+    /// (decode only).
     InvalidCharCount { specified: u32, realized: usize },
+    /// The specified kerning pair count does not match the number of specified kerning pairs
+    /// (decode only).
     InvalidKerningCount { specified: u32, realized: usize },
+    /// The tagged key name is not valid (decode only).
     InvalidKey { line: Option<usize>, key: String },
+    /// The tag name is not valid (decode only).
     InvalidTag { line: Option<usize>, tag: String },
+    /// The tagged key value is not valid (decode only).
     InvalidValue { line: Option<usize>, key: String, err: String },
+    /// There is a gap in the list of specified page ids (decode only).
     MissingPageId { line: Option<usize>, id: u32 },
+    /// The common block is missing.
     NoCommonBlock,
+    /// The info block is missing.
     NoInfoBlock,
+    /// There was an error parsing a value.
     Parse { line: Option<usize>, err: String },
+    /// The binary version is unsupported (decode only).
     UnsupportedBinaryVersion { version: u8 },
+    /// Internal error. This should not occur.
     Internal { err: String },
+    /// Io error.
     Io(io::Error),
 }
 

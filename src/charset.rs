@@ -5,32 +5,54 @@ use crate::parse::{Parse, ParseResult};
 
 use std::fmt;
 
+/// ANSI character encoding.
 pub const ANSI: u8 = 0;
+/// Default character encoding.
 pub const DEFAULT: u8 = 1;
+/// Symbol character encoding.
 pub const SYMBOL: u8 = 2;
+/// Shift JIS character encoding.
 pub const SHIFTJIS: u8 = 128;
+/// Hangul character encoding.
 pub const HANGUL: u8 = 129;
+/// GB 2312 Chinese character encoding.
 pub const GB2312: u8 = 134;
+/// Big5 Chinese character encoding.
 pub const CHINESEBIG5: u8 = 136;
+/// OEM character encoding.
 pub const OEM: u8 = 255;
+/// Johab Korean character encoding.
 pub const JOHAB: u8 = 130;
+/// Hebrew character encoding.
 pub const HEBREW: u8 = 177;
+/// Arabic character encoding.
 pub const ARABIC: u8 = 178;
+/// Greek character encoding.
 pub const GREEK: u8 = 161;
+/// Turkish character encoding.
 pub const TURKISH: u8 = 162;
+/// Vietnamese character encoding.
 pub const VIETNAMESE: u8 = 163;
+/// Thai character encoding.
 pub const THAI: u8 = 222;
+/// Eastern Europe character encoding.
 pub const EASTEUROPE: u8 = 238;
+/// Russian character encoding.
 pub const RUSSIAN: u8 = 204;
+/// Max character encoding.
 pub const MAC: u8 = 77;
+/// Baltic character encoding.
 pub const BALTIC: u8 = 186;
 
 /// Non-Unicode character set encoding.
 ///
-/// When manually constructing, prefer constructing the `Tagged` variant.
-/// This ensures unambiguous binary format conversion.
+/// Defines the character set encoding when using non-Unicode fonts.
+/// When Unicode is in use, this should be set to [Charset::Null].
 ///
-/// ## Conversion rules: Binary
+/// When manually constructing, you'll probably want to use the `Tagged` variant with the required
+/// charset constant. See examples below.
+///
+/// # Conversion rules: Binary
 ///
 /// The binary format `Charset` field is composed of a single byte: `u8`.
 ///
@@ -43,7 +65,7 @@ pub const BALTIC: u8 = 186;
 /// - `Tagged(u) => u`
 /// - `Undefined => 0`
 ///
-/// ## Conversion rules: `String`
+/// # Conversion rules: `String`
 ///
 /// `String` to `Charset`, in order of precedence:
 /// - `"" => Null`
@@ -60,6 +82,34 @@ pub const BALTIC: u8 = 186;
 /// - `Undefined(undefined) => undefined`
 ///
 /// e.g. `Tagged(163) => "VIETNAMESE"`
+///
+/// # Examples
+///
+/// ```
+/// # use bmfont_rs::Charset;
+/// # use bmfont_rs::ANSI;
+/// // Construct ANSI
+/// let charset = Charset::Tagged(ANSI);
+/// ```
+///
+/// ```
+/// # use bmfont_rs::Charset;
+/// # use bmfont_rs::SHIFTJIS;
+/// // Parse BMFont defined charset encoding constant string (case sensitive)
+/// let name = "SHIFTJIS";
+/// let charset: Charset = name.into();
+/// assert_eq!(charset, Charset::Tagged(SHIFTJIS));
+/// ```
+///
+/// ```
+/// # use bmfont_rs::Charset;
+/// # use bmfont_rs::ANSI;
+/// // Parse undefined charset string (case sensitive)
+/// let name = "Miniature Giraffe Encoding";
+/// let charset: Charset = name.into();
+/// assert_eq!(charset, Charset::Undefined("Miniature Giraffe Encoding".to_owned()));
+/// ```
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
@@ -68,8 +118,12 @@ pub const BALTIC: u8 = 186;
     serde(into = "String")
 )]
 pub enum Charset {
+    /// Used with Unicode character set encoding to indicate no other character set encoding
+    /// is in play.
     Null,
+    /// Used with BMFont defined character set encoding constants.
     Tagged(u8),
+    /// Used with non-BMFont defined character set encodings.
     Undefined(String),
 }
 

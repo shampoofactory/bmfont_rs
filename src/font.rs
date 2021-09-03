@@ -7,6 +7,9 @@ use crate::parse::{Parse, ParseError, ParseResult};
 
 use super::charset::Charset;
 
+/// Bitmap Font object.
+///
+// TODO document validity
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Font {
@@ -30,18 +33,34 @@ impl Font {
     }
 }
 
+/// Character description.
+///
+/// This block describes on character in the font.
+/// There is one for each included character in the font.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Char {
+    /// The character id.
     pub id: u32,
+    /// The left position of the character image in the texture.
     pub x: u16,
+    /// The top position of the character image in the texture.   
     pub y: u16,
+    /// The width of the character image in the texture.
     pub width: u16,
+    /// The height of the character image in the texture.
     pub height: u16,
+    /// How much the current position should be offset when copying the image from the texture to
+    /// the screen.
     pub xoffset: i16,
+    /// How much the current position should be offset when copying the image from the texture to
+    /// the screen.
     pub yoffset: i16,
+    /// How much the current position should be advanced after drawing the character.
     pub xadvance: i16,
+    /// The texture page where the character image is found.
     pub page: u8,
+    // The texture channel where the character image is found.
     pub chnl: Chnl,
 }
 
@@ -64,23 +83,37 @@ impl Char {
     }
 }
 
+/// Common character description.
+///
+/// This block holds information common to all characters.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
 pub struct Common {
+    /// This is the distance in pixels between each line of text.
     pub line_height: u16,
+    /// The number of pixels from the absolute top of the line to the base of the characters.
     pub base: u16,
+    /// The width of the texture, normally used to scale the x pos of the character image.
     pub scale_w: u16,
+    /// The height of the texture, normally used to scale the y pos of the character image.
     pub scale_h: u16,
+    /// The number of texture pages included in the font.
     pub pages: u16,
     #[cfg_attr(
         all(feature = "serde", feature = "serde_boolint"),
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
+    /// True if the monochrome characters have been packed into each of the texture channels.
+    /// In this case the channel packing describes what is stored in each channel.
     pub packed: bool,
+    /// Alpha channel packing.
     pub alpha_chnl: Packing,
+    /// Red channel packing.
     pub red_chnl: Packing,
+    /// Green channel packing.
     pub green_chnl: Packing,
+    /// Blue channel packing.
     pub blue_chnl: Packing,
 }
 
@@ -114,40 +147,55 @@ impl Common {
     }
 }
 
+/// Font information.
+///
+/// This block holds information on how the font was generated.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
 pub struct Info {
+    /// This is the name of the true type font.
     pub face: String,
+    /// The size of the true type font.
     pub size: i16,
+    /// True if the font is bold.
     #[cfg_attr(
         all(feature = "serde", feature = "serde_boolint"),
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
     pub bold: bool,
+    /// True if the font is italic.
     #[cfg_attr(
         all(feature = "serde", feature = "serde_boolint"),
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
     pub italic: bool,
+    /// The name of the OEM charset (when not Unicode).
     pub charset: Charset,
     #[cfg_attr(
         all(feature = "serde", feature = "serde_boolint"),
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
+    /// True if Unicode charset.
     pub unicode: bool,
+    /// The font height stretch in percentage. 100% means no stretch.
     pub stretch_h: u16,
+    /// True if smoothing was turned on.
     #[cfg_attr(
         all(feature = "serde", feature = "serde_boolint"),
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
     pub smooth: bool,
+    /// The supersampling level used. 1 means no supersampling was used.
     pub aa: u8,
+    /// The padding for each character.
     pub padding: Padding,
+    /// The spacing for each character.
     pub spacing: Spacing,
+    /// The outline thickness for the characters.
     #[cfg_attr(feature = "serde", serde(default))]
     pub outline: u8,
 }
@@ -217,6 +265,10 @@ pub struct Page {
     serde(from = "[u8; 4]"),
     serde(into = "[u8; 4]")
 )]
+
+/// Character padding.
+///
+/// The padding for each character (up, right, down, left).
 pub struct Padding {
     pub up: u8,
     pub right: u8,
@@ -262,6 +314,10 @@ impl From<Padding> for [u8; 4] {
     serde(from = "[u8; 2]"),
     serde(into = "[u8; 2]")
 )]
+
+/// Character spacing.
+///
+/// The spacing for each character (horizontal, vertical).
 pub struct Spacing {
     pub horizontal: u8,
     pub vertical: u8,
@@ -298,11 +354,19 @@ impl From<Spacing> for [u8; 2] {
     }
 }
 
+/// Kerning pair.
+///
+/// The kerning information is used to adjust the distance between certain characters,
+/// e.g. some characters should be placed closer to each other than others.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Kerning {
+    /// The first character id.
     pub first: u32,
+    /// The second character id.
     pub second: u32,
+    /// How much the x position should be adjusted when drawing the second character immediately
+    /// following the first.
     pub amount: i16,
 }
 
@@ -313,6 +377,10 @@ impl Kerning {
     }
 }
 
+/// Channel packing description.
+///
+/// Used when character packing is specified to describe what is stored in each texture
+/// channel.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
@@ -322,10 +390,15 @@ impl Kerning {
 )]
 #[repr(u8)]
 pub enum Packing {
+    /// Channel holds glyph data.
     Glyph = 0,
+    /// Channel holds outline data.
     Outline = 1,
+    /// Channel holds glyph and outline data.
     GlyphOutline = 2,
+    /// Channel is set to zero.
     Zero = 3,
+    /// Channel is set to one.
     One = 4,
 }
 
@@ -366,6 +439,48 @@ impl Parse for Packing {
     }
 }
 
+/// Character texture channel description.
+///
+/// The texture channel/s where the character image is found.
+///
+/// That the official BMFont documentations only specifies five possible combinations:
+/// red, blue, green, alpha and all.
+///
+/// These are encoded as the constants:
+/// [RED](Self::RED),
+/// [GREEN](Self::GREEN),
+/// [BLUE](Self::BLUE),
+/// [ALPHA](Self::ALPHA),
+/// [ALL](Self::ALL),
+///
+///
+/// Internally the structure is represented by a byte bit field. The individual channel bits can
+/// bet queried and set as desired. Unless you know what you're doing, take care when setting bits
+/// to avoid non-standard combinations.
+///
+/// # Examples
+///
+/// ```
+/// # use bmfont_rs::Chnl;
+/// // Constructing using the standard constants
+/// let chnl = Chnl::RED;
+/// assert!(chnl.red());
+/// assert!(!chnl.green());
+/// assert!(!chnl.blue());
+/// assert!(!chnl.alpha());
+/// ```
+///
+/// ```
+/// # use bmfont_rs::Chnl;
+/// // Matching using the standard constants, although you'll likely want to throw an error
+/// // rather than panic.
+/// let chnl = Chnl::RED;
+/// match chnl {
+///     Chnl::RED => { /* RED handling code here */},
+///     Chnl::ALL => { /* ALL handling code here */},
+///     _ => { /* cannot handle */ panic!() }
+/// }
+/// ```
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
@@ -376,18 +491,31 @@ impl Parse for Packing {
 pub struct Chnl(u8);
 
 impl Chnl {
+    /// Character image data is stored in all channels.    
     pub const ALL: Chnl = Chnl(15);
+
+    /// Character image data is stored in the alpha channel.    
     pub const ALPHA: Chnl = Chnl(8);
+
+    /// Character image data is stored in the red channel.    
     pub const RED: Chnl = Chnl(4);
+
+    /// Character image data is stored in the green channel.    
     pub const GREEN: Chnl = Chnl(2);
+
+    /// Character image data is stored in the blue channel.    
     pub const BLUE: Chnl = Chnl(1);
+
+    /// Character image data is not stored. Non standard.
     pub const NONE: Chnl = Chnl(0);
 
+    /// The alpha channel bit.
     #[inline(always)]
     pub fn alpha(self) -> bool {
         self.0 & 8 != 0
     }
 
+    /// Set the alpha channel bit.
     #[inline(always)]
     pub fn set_alpha(&mut self, v: bool) {
         if v {
@@ -397,11 +525,13 @@ impl Chnl {
         }
     }
 
+    /// The red channel bit.
     #[inline(always)]
     pub fn red(self) -> bool {
         self.0 & 4 != 0
     }
 
+    /// Set the red channel bit.
     #[inline(always)]
     pub fn set_red(&mut self, v: bool) {
         if v {
@@ -411,11 +541,13 @@ impl Chnl {
         }
     }
 
+    /// The green channel bit.
     #[inline(always)]
     pub fn green(self) -> bool {
         self.0 & 2 != 0
     }
 
+    /// Set the green channel bit.
     #[inline(always)]
     pub fn set_green(&mut self, v: bool) {
         if v {
@@ -425,11 +557,13 @@ impl Chnl {
         }
     }
 
+    /// The blue channel bit.
     #[inline(always)]
     pub fn blue(self) -> bool {
         self.0 & 1 != 0
     }
 
+    /// Set the blue channel bit.
     #[inline(always)]
     pub fn set_blue(&mut self, v: bool) {
         if v {
