@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::convert::{TryFrom, TryInto};
 
 #[cfg(feature = "serde")]
@@ -7,16 +8,22 @@ use crate::parse::{Parse, ParseError, ParseResult};
 
 use super::charset::Charset;
 
-/// Bitmap Font object.
+/// Bitmap font descriptor.
 ///
-// TODO document validity
+/// This struct holds, in it's entirety, the information contained within a BMFont descriptor file.
+/// This, when paired with the associated texture file/s, allows us to render the describe font.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Font {
+    /// Font information.
     pub info: Info,
+    /// Common character description.
     pub common: Common,
+    /// Texture filenames.
     pub pages: Vec<String>,
+    /// Character descriptors.
     pub chars: Vec<Char>,
+    /// Kerning pairs.
     pub kernings: Vec<Kerning>,
 }
 
@@ -30,6 +37,39 @@ impl Font {
         kernings: Vec<Kerning>,
     ) -> Self {
         Self { info, common, pages, chars, kernings }
+    }
+
+    /// Validate references. Ensure that all page/ character references exist. In other words, that
+    /// we don't have references to a non-existent page/ character.
+    pub fn validate_references(&self) -> crate::Result<()> {
+        self.validate_char_references()?;
+        self.validate_kerning_references()?;
+        Ok(())
+    }
+
+    fn validate_char_references(&self) -> crate::Result<()> {
+        for char in &self.chars {
+            if self.pages.len() <= char.page as usize {
+                return Err(crate::Error::InvalidCharPage {
+                    char_id: char.id,
+                    page_id: char.page as u32,
+                });
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_kerning_references(&self) -> crate::Result<()> {
+        let set: HashSet<u32> = self.chars.iter().map(|u| u.id).collect();
+        for kerning in &self.kernings {
+            if !set.contains(&kerning.first) {
+                return Err(crate::Error::InvalidKerningChar { id: kerning.first });
+            }
+            if !set.contains(&kerning.second) {
+                return Err(crate::Error::InvalidKerningChar { id: kerning.first });
+            }
+        }
+        Ok(())
     }
 }
 

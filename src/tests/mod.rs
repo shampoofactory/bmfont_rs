@@ -221,3 +221,8 @@ fn xml_text_med_cmp() -> Result<(), Box<dyn Error>> {
     assert_eq!(xml_font, text_font);
     Ok(())
 }
+
+#[test]
+fn validate_small() -> crate::Result<()> {
+    small().validate_references()
+}

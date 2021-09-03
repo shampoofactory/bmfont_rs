@@ -24,66 +24,136 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
+    /// The specified page ids do not form a coherent/ sequential list (decode only).
+    BrokenPageList,
     /// Duplicate character count (decode only).
-    DuplicateCharCount { line: Option<usize> },
+    DuplicateCharCount {
+        line: Option<usize>,
+    },
     /// Duplicate character id.
-    DuplicateChar { line: Option<usize>, id: u32 },
+    DuplicateChar {
+        line: Option<usize>,
+        id: u32,
+    },
     /// Duplicate common block (decode only).
-    DuplicateCommonBlock { line: Option<usize> },
+    DuplicateCommonBlock {
+        line: Option<usize>,
+    },
     /// Duplicate info block (decode only).
-    DuplicateInfoBlock { line: Option<usize> },
+    DuplicateInfoBlock {
+        line: Option<usize>,
+    },
     /// Duplicate kerning count (decode only).
-    DuplicateKerningCount { line: Option<usize> },
+    DuplicateKerningCount {
+        line: Option<usize>,
+    },
     /// Duplicate kerning pair entry.
-    DuplicateKerningPair { line: Option<usize>, first: u32, second: u32 },
+    DuplicateKerningPair {
+        line: Option<usize>,
+        first: u32,
+        second: u32,
+    },
     /// Duplicate tagged key value (decode only).
-    DuplicateKey { line: Option<usize>, key: String },
+    DuplicateKey {
+        line: Option<usize>,
+        key: String,
+    },
     /// Duplicate page id (decode only).
-    DuplicatePage { line: Option<usize>, id: u32 },
+    DuplicatePage {
+        line: Option<usize>,
+        id: u32,
+    },
     /// Duplicate tag (decode only).
-    DuplicateTag { line: Option<usize>, tag: String },
-    /// The specified page file names are not all of equal length, as specified by the BMFont
-    /// binary format.
-    IncongruentPageNameLen { line: Option<usize> },
+    DuplicateTag {
+        line: Option<usize>,
+        tag: String,
+    },
+    IncongruentPageNameLen {
+        line: Option<usize>,
+    },
     /// The input is not a valid BMFont binary file (decode only).
-    InvalidBinary { magic_bytes: u32 },
+    InvalidBinary {
+        magic_bytes: u32,
+    },
     /// Invalid binary block (decode only).
-    InvalidBinaryBlock { id: u8 },
+    InvalidBinaryBlock {
+        id: u8,
+    },
     /// Invalid binary block length (decode only).
-    InvalidBinaryEncoding { unicode: bool, charset: Charset },
+    InvalidBinaryEncoding {
+        unicode: bool,
+        charset: Charset,
+    },
     /// Invalid binary version.
-    InvalidBinaryVersion { version: u8 },
+    InvalidBinaryVersion {
+        version: u8,
+    },
     /// The specified character count does not match the number of specified characters
     /// (decode only).
-    InvalidCharCount { specified: u32, realized: usize },
+    InvalidCharCount {
+        specified: u32,
+        realized: usize,
+    },
+    /// The specified character page does not exist.
+    InvalidCharPage {
+        char_id: u32,
+        page_id: u32,
+    },
     /// The specified kerning pair count does not match the number of specified kerning pairs
     /// (decode only).
-    InvalidKerningCount { specified: u32, realized: usize },
+    InvalidKerningCount {
+        specified: u32,
+        realized: usize,
+    },
+    /// The specified kerning character does not exist.
+    InvalidKerningChar {
+        id: u32,
+    },
     /// The tagged key name is not valid (decode only).
-    InvalidKey { line: Option<usize>, key: String },
+    InvalidKey {
+        line: Option<usize>,
+        key: String,
+    },
     /// The tag name is not valid (decode only).
-    InvalidTag { line: Option<usize>, tag: String },
+    InvalidTag {
+        line: Option<usize>,
+        tag: String,
+    },
     /// The tagged key value is not valid (decode only).
-    InvalidValue { line: Option<usize>, key: String, err: String },
-    /// There is a gap in the list of specified page ids (decode only).
-    MissingPageId { line: Option<usize>, id: u32 },
+    InvalidValue {
+        line: Option<usize>,
+        key: String,
+        err: String,
+    },
     /// The common block is missing.
     NoCommonBlock,
     /// The info block is missing.
     NoInfoBlock,
     /// There was an error parsing a value.
-    Parse { line: Option<usize>, err: String },
+    Parse {
+        line: Option<usize>,
+        err: String,
+    },
     /// The binary version is unsupported (decode only).
-    UnsupportedBinaryVersion { version: u8 },
+    UnsupportedBinaryVersion {
+        version: u8,
+    },
     /// Internal error. This should not occur.
-    Internal { err: String },
+    Internal {
+        err: String,
+    },
     /// Io error.
-    Io { err: io::Error },
+    Io {
+        err: io::Error,
+    },
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::BrokenPageList => {
+                write!(f, "broken page list")
+            }
             Error::DuplicateCharCount { line } => {
                 write!(f, "{}duplicate char count", format_line(line))
             }
@@ -129,8 +199,14 @@ impl fmt::Display for Error {
             Error::InvalidCharCount { specified, realized } => {
                 write!(f, "invalid char count: specified: {}, realized: {}", specified, realized)
             }
+            Error::InvalidCharPage { char_id, page_id } => {
+                write!(f, "invalid char page id: char id: {}, page id: {}", char_id, page_id)
+            }
             Error::InvalidKerningCount { specified, realized } => {
                 write!(f, "invalid kerning count: specified: {}, realized: {}", specified, realized)
+            }
+            Error::InvalidKerningChar { id } => {
+                write!(f, "invalid kerning char: {}", id)
             }
             Error::InvalidKey { line, key } => {
                 write!(f, "{}invalid key: '{}'", format_line(line), key)
@@ -140,9 +216,6 @@ impl fmt::Display for Error {
             }
             Error::InvalidValue { line, key, err } => {
                 write!(f, "{}invalid value: '{}', {}", format_line(line), key, err)
-            }
-            Error::MissingPageId { line, id } => {
-                write!(f, "{}missing page id: {}", format_line(line), id)
             }
             Error::NoCommonBlock => {
                 write!(f, "no common block")

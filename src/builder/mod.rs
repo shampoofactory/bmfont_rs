@@ -68,7 +68,7 @@ impl FontBuilder {
         }
     }
 
-    pub fn page<'a, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn page<'a, A>(&mut self, _line: Option<usize>, attributes: &mut A) -> crate::Result<()>
     where
         A: Attributes<'a>,
     {
@@ -77,7 +77,7 @@ impl FontBuilder {
             self.pages.push(file);
             Ok(())
         } else {
-            Err(crate::Error::MissingPageId { line, id: self.pages.len() as u32 })
+            Err(crate::Error::BrokenPageList)
         }
     }
 
