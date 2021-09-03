@@ -11,7 +11,7 @@ use super::charset::Charset;
 /// Bitmap font descriptor.
 ///
 /// This struct holds, in it's entirety, the information contained within a BMFont descriptor file.
-/// This, when paired with the associated texture file/s, allows us to render the describe font.
+/// This, when paired with the associated texture file/s, allows us to render the described font.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Font {
