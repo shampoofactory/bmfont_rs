@@ -506,9 +506,6 @@ impl Chnl {
     /// Character image data is stored in the blue channel.    
     pub const BLUE: Chnl = Chnl(1);
 
-    /// Character image data is not stored. Non standard.
-    pub const NONE: Chnl = Chnl(0);
-
     /// The alpha channel bit.
     #[inline(always)]
     pub fn alpha(self) -> bool {

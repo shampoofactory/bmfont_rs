@@ -59,7 +59,7 @@ fn small() -> Font {
             yoffset: 17,
             xadvance: 9,
             page: 0,
-            chnl: Chnl::NONE,
+            chnl: Chnl::RED,
         },
     ];
     let kernings = vec![
