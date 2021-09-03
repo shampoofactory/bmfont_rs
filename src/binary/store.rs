@@ -76,7 +76,7 @@ impl<'a> StoreAssist<'a> {
                         if id == 0 {
                             len = file.len();
                         } else if file.len() != len {
-                            return Err(crate::Error::IncongruentPageFileLen { line: None });
+                            return Err(crate::Error::IncongruentPageNameLen { line: None });
                         }
                     }
                     PackDyn::<C>::pack_dyn(&file.as_str(), &mut self.dst)?;

@@ -5,14 +5,24 @@ use crate::Charset;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// BMFont errors.
+/// Crate errors.
 ///
 /// Describes the various errors that may occur when encoding/ decoding/ manipulating BMFont data
 /// structures.
 ///
-/// The [Internal](Error::Internal) variant indicates malfunctioning crate code and should be
-/// reported at the project repository home [here](https://github.com/shampoofactory/lzfse_rust/issues).
+///
+/// The list of variants may change over time. Other than [Error::Io] and [Error::Internal] you'll
+/// probably not want to match against them.
+///
+///
+/// `From<bmfont_rs::Error> for std::io::Error` is provided as a convenience.
+///
+///
+/// The [Error::Internal] variant indicates malfunctioning library code and should be
+/// reported at the project repository home
+/// [here](https://github.com/shampoofactory/lzfse_rust/issues).
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// Duplicate character count (decode only).
     DuplicateCharCount { line: Option<usize> },
@@ -32,16 +42,14 @@ pub enum Error {
     DuplicatePage { line: Option<usize>, id: u32 },
     /// Duplicate tag (decode only).
     DuplicateTag { line: Option<usize>, tag: String },
-    /// Not all the specified page file names are equal, as stated in the BMFont binary
-    /// specification.
-    IncongruentPageFileLen { line: Option<usize> },
+    /// The specified page file names are not all of equal length, as specified by the BMFont
+    /// binary format.
+    IncongruentPageNameLen { line: Option<usize> },
     /// The input is not a valid BMFont binary file (decode only).
     InvalidBinary { magic_bytes: u32 },
     /// Invalid binary block (decode only).
     InvalidBinaryBlock { id: u8 },
     /// Invalid binary block length (decode only).
-    InvalidBinaryBlockLen { id: u8, len: u32 },
-    /// Invalid binary block character set encoding.
     InvalidBinaryEncoding { unicode: bool, charset: Charset },
     /// Invalid binary version.
     InvalidBinaryVersion { version: u8 },
@@ -70,7 +78,7 @@ pub enum Error {
     /// Internal error. This should not occur.
     Internal { err: String },
     /// Io error.
-    Io(io::Error),
+    Io { err: io::Error },
 }
 
 impl fmt::Display for Error {
@@ -103,7 +111,7 @@ impl fmt::Display for Error {
             Error::DuplicateTag { line, tag } => {
                 write!(f, "{}duplicate tag: '{}'", format_line(line), tag)
             }
-            Error::IncongruentPageFileLen { line } => {
+            Error::IncongruentPageNameLen { line } => {
                 write!(f, "{}incongruent page file length", format_line(line))
             }
             Error::InvalidBinary { magic_bytes } => {
@@ -111,9 +119,6 @@ impl fmt::Display for Error {
             }
             Error::InvalidBinaryBlock { id } => {
                 write!(f, "invalid binary block: id: {}", id)
-            }
-            Error::InvalidBinaryBlockLen { id, len } => {
-                write!(f, "invalid binary block: id: {}, len: {}", id, len)
             }
             Error::InvalidBinaryEncoding { unicode, charset } => {
                 write!(f, "invalid binary encoding: unicode: {}, charset: {}", unicode, charset)
@@ -154,7 +159,7 @@ impl fmt::Display for Error {
             Error::Internal { err } => {
                 write!(f, "internal error: {}", err)
             }
-            Error::Io(err) => {
+            Error::Io { err } => {
                 write!(f, "io: {}", err)
             }
         }
@@ -165,7 +170,20 @@ impl std::error::Error for Error {}
 
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
-        Self::Io(err)
+        Self::Io { err }
+    }
+}
+
+impl From<Error> for io::Error {
+    fn from(err: Error) -> Self {
+        match err {
+            Error::Io { err } => err,
+            err @ Error::Internal { .. } => io::Error::new(io::ErrorKind::Other, err),
+            err @ Error::UnsupportedBinaryVersion { .. } => {
+                io::Error::new(io::ErrorKind::Other, err)
+            }
+            err => io::Error::new(io::ErrorKind::InvalidData, err),
+        }
     }
 }
 
