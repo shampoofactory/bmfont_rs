@@ -481,7 +481,7 @@ impl Parse for Packing {
 ///     _ => { /* cannot handle */ panic!() }
 /// }
 /// ```
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -568,6 +568,13 @@ impl Chnl {
         } else {
             self.0 &= !1;
         }
+    }
+}
+
+impl Default for Chnl {
+    #[inline(always)]
+    fn default() -> Self {
+        Self::ALL
     }
 }
 
