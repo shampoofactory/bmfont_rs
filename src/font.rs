@@ -10,8 +10,25 @@ use super::charset::Charset;
 
 /// Bitmap font descriptor.
 ///
-/// This struct holds, in it's entirety, the information contained within a BMFont descriptor file.
+/// This object holds, in it's entirety, the information contained within a BMFont descriptor file.
 /// This, when paired with the associated texture file/s, allows us to render the described font.
+///
+/// Data is structured in accordance with the
+/// [Bitmap Font Generator - Documentation](http://www.angelcode.com/products/bmfont/doc/file_format.html)
+/// .
+///
+/// N.B. Certain tools deviate from the BMFont standard and can generate incompatible files.
+///
+/// Outline:
+///
+/// - `info`: holds information on how the font was generated.
+/// - `common`: holds information common to all characters.
+/// - `pages`: holds an ordered list of texture files, the index corresponds to the page id.
+/// - `chars`: holds an unordered list of character descriptions.
+/// - `kernings` holds an unordered list of kerning pairs.
+///
+/// For efficient usage you'll likely want to convert `chars` and `kernings` to maps for efficient
+/// usage.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Font {
@@ -75,7 +92,7 @@ impl Font {
 
 /// Character description.
 ///
-/// This block describes on character in the font.
+/// This block describes a character in the font.
 /// There is one for each included character in the font.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
