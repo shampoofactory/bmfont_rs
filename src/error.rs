@@ -262,7 +262,7 @@ impl From<Error> for io::Error {
 
 fn format_line(line: &Option<usize>) -> String {
     if let Some(line) = line {
-        format!("{}", line)
+        format!("line: {}: ", line)
     } else {
         "".to_owned()
     }
