@@ -5,7 +5,7 @@ pub trait Attributes<'a> {
     fn next_attribute(&mut self) -> crate::Result<Option<Attribute<'a>>>;
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Attribute<'a> {
     pub key: &'a [u8],
     pub value: &'a [u8],
@@ -29,5 +29,27 @@ impl<'a> Attributes<'a> for TaggedAttributes<'a> {
                 err: format!("attributes: {}", err),
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tagged_attributes_next_attribute() -> crate::Result<()> {
+        let mut attributes = TaggedAttributes::from_bytes(b"key=value");
+        assert_eq!(attributes.next_attribute()?, Some(Attribute::new(b"key", b"value", Some(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn tagged_attributes_next_attribute_err() -> crate::Result<()> {
+        let mut attributes = TaggedAttributes::from_bytes(b"key=");
+        match attributes.next_attribute() {
+            Err(_) => {}
+            Ok(_) => panic!("expected error"),
+        }
+        Ok(())
     }
 }

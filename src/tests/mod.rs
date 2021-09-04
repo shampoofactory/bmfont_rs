@@ -275,3 +275,21 @@ err!(
     text::from_bytes(include_bytes!("../../data/bad/bad_int.txt").as_ref()),
     crate::Error::Parse { .. }
 );
+
+err!(
+    bin_underflow,
+    binary::from_bytes(include_bytes!("../../data/bad/underflow.bin").as_ref()),
+    crate::Error::Parse { .. }
+);
+
+err!(
+    bin_overflow,
+    binary::from_bytes(include_bytes!("../../data/bad/overflow.bin").as_ref()),
+    crate::Error::Parse { .. }
+);
+
+err!(
+    bin_unsupported,
+    binary::from_bytes(include_bytes!("../../data/bad/unsupported.bin").as_ref()),
+    crate::Error::UnsupportedBinaryVersion { version: 0xFF }
+);
