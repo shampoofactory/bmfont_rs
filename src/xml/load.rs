@@ -7,10 +7,54 @@ use crate::font::Font;
 use std::io;
 use std::mem;
 
+/// Load XML format font.
+///
+/// Load a font from the specified XML format [str].
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::io;
+/// use std::io::prelude::*;
+/// use std::fs;
+///
+/// fn main() -> bmfont_rs::Result<()> {
+///     let mut src = fs::read_to_string("font.xml")?;
+///     let font = bmfont_rs::xml::from_str(&src)?;
+///     println!("{:?}", font);
+///     Ok(())
+/// }
+/// ```
 pub fn from_str(src: &str) -> crate::Result<Font> {
     FontBuilderXml::default().load_str(src)?.build()
 }
 
+/// Load XML format font.
+///
+/// Load a font from the specified XML format byte slice.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::io;
+/// use std::io::prelude::*;
+/// use std::fs;
+///
+/// fn main() -> bmfont_rs::Result<()> {
+///     let mut buf = fs::read("font.xml")?;
+///     let font = bmfont_rs::xml::from_bytes(&buf)?;
+///     println!("{:?}", font);
+///     Ok(())
+/// }
+/// ```
 pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
     from_str(std::str::from_utf8(bytes).map_err(|e| crate::Error::Parse {
         line: None,
@@ -19,6 +63,29 @@ pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
     })?)
 }
 
+/// Read XML format font.
+///
+/// Read a font from the specified XML format reader.
+/// This method buffers data internally, a buffered reader is not needed.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::io;
+/// use std::io::prelude::*;
+/// use std::fs::File;
+///
+/// fn main() -> bmfont_rs::Result<()> {
+///     let mut f = File::open("font.xml")?;
+///     let font = bmfont_rs::xml::from_reader(f)?;
+///     println!("{:?}", font);
+///     Ok(())
+/// }
+/// ```
 pub fn from_reader<R: io::Read>(mut reader: R) -> crate::Result<Font> {
     let mut vec = Vec::default();
     reader.read_to_end(&mut vec)?;
@@ -98,7 +165,7 @@ impl FontBuilderXml {
 
 impl<'a, 'b: 'a> Attributes<'a> for &'b [xml::Attribute<'a>] {
     fn next_attribute(&mut self) -> crate::Result<Option<Attribute<'a>>> {
-        if self.len() == 0 {
+        if self.is_empty() {
             return Ok(None);
         }
         let (head, tail) = mem::take(self).split_at(1);

@@ -7,12 +7,57 @@ use super::pack::{self, Unpack, UnpackDyn};
 
 use std::io;
 
+/// Read binary format font.
+///
+/// Read a font from the specified binary format reader.
+/// This method buffers data internally, a buffered reader is not needed.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::io;
+/// use std::io::prelude::*;
+/// use std::fs::File;
+///
+/// fn main() -> bmfont_rs::Result<()> {
+///     let mut f = File::open("font.bin")?;
+///     let font = bmfont_rs::binary::from_reader(f)?;
+///     println!("{:?}", font);
+///     Ok(())
+/// }
+/// ```
 pub fn from_reader<R: io::Read>(mut reader: R) -> crate::Result<Font> {
     let mut vec = Vec::default();
     reader.read_to_end(&mut vec)?;
     from_bytes(vec.as_slice())
 }
 
+/// Load binary format font.
+///
+/// Load a font from the specified binary format byte slice.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::io;
+/// use std::io::prelude::*;
+/// use std::fs;
+///
+/// fn main() -> bmfont_rs::Result<()> {
+///     let mut buf = fs::read("font.bin")?;
+///     let font = bmfont_rs::binary::from_bytes(&buf)?;
+///     println!("{:?}", font);
+///     Ok(())
+/// }
+/// ```
 pub fn from_bytes(mut bytes: &[u8]) -> crate::Result<Font> {
     let magic: Magic = Unpack::<()>::unpack_take(&mut bytes)?;
     let mut builder = Assist::new(bytes, magic.version()?)?;

@@ -2,6 +2,24 @@ use crate::font::{Char, Common, Font, Info, Kerning};
 
 use std::io;
 
+/// Store XML format font.
+///
+/// Store a font into a [String] in XML format.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// fn main() -> bmfont_rs::Result<()> {
+///     let font = bmfont_rs::Font::default();
+///     let string = bmfont_rs::xml::to_string(&font)?;
+///     println!("{}", string);
+///     Ok(())
+/// }
+/// ```
 pub fn to_string(font: &Font) -> crate::Result<String> {
     let vec = to_vec(font)?;
     String::from_utf8(vec).map_err(|e| crate::Error::Parse {
@@ -11,12 +29,53 @@ pub fn to_string(font: &Font) -> crate::Result<String> {
     })
 }
 
+/// Store XML format font.
+///
+/// Store a font into a [Vec] in XML format.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// fn main() -> bmfont_rs::Result<()> {
+///     let font = bmfont_rs::Font::default();
+///     let vec = bmfont_rs::xml::to_vec(&font)?;
+///     println!("{:02X?}", font);
+///     Ok(())
+/// }
+/// ```
 pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
     let mut vec: Vec<u8> = Vec::default();
     to_writer(&mut vec, font)?;
     Ok(vec)
 }
 
+/// Write XML format font.
+///
+/// Write a font to the specified writer in XML format.
+/// This method buffers data internally, a buffered writer is not needed.
+///
+/// # Errors
+///
+/// * [Error](crate::Error) detailing the nature of any errors.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::io;
+/// use std::io::prelude::*;
+/// use std::fs::File;
+///
+/// fn main() -> bmfont_rs::Result<()> {
+///     let font = bmfont_rs::Font::default();
+///     let mut writer = File::create("font.xml")?;
+///     bmfont_rs::xml::to_writer(&mut writer, &font)?;
+///     Ok(())
+/// }
+/// ```
 pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> io::Result<()> {
     font.store(&mut writer)
 }

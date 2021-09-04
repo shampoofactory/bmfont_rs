@@ -1,3 +1,8 @@
+#![warn(missing_docs)]
+/*!
+
+
+*/
 mod builder;
 mod charset;
 mod error;

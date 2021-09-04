@@ -3,6 +3,7 @@ use std::io;
 
 use crate::Charset;
 
+/// Error Result.
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Crate errors.
@@ -28,91 +29,123 @@ pub enum Error {
     BrokenPageList,
     /// Duplicate character count (decode only).
     DuplicateCharCount {
+        /// Line where the error occured.
         line: Option<usize>,
     },
     /// Duplicate character id.
     DuplicateChar {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Duplicate char id.
         id: u32,
     },
     /// Duplicate common block (decode only).
     DuplicateCommonBlock {
+        /// Line where the error occured.
         line: Option<usize>,
     },
     /// Duplicate info block (decode only).
     DuplicateInfoBlock {
+        /// Line where the error occured.
         line: Option<usize>,
     },
     /// Duplicate kerning count (decode only).
     DuplicateKerningCount {
+        /// Line where the error occured.
         line: Option<usize>,
     },
     /// Duplicate kerning pair entry.
     DuplicateKerningPair {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Kerning first character id.
         first: u32,
+        /// Kerning second character id.
         second: u32,
     },
     /// Duplicate tagged key value (decode only).
     DuplicateKey {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Duplicate key.
         key: String,
     },
     /// Duplicate page id (decode only).
     DuplicatePageId {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Duplicate page id.
         id: u32,
     },
     /// Duplicate tag (decode only).
     DuplicateTag {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Duplicate tag.
         tag: String,
     },
+    /// Page name lengths are not all of the same size.
     IncongruentPageNameLen {
+        /// Line where the error occured.
         line: Option<usize>,
     },
     /// The input is not a valid BMFont binary file (decode only).
     InvalidBinary {
+        /// Magic bytes.
         magic_bytes: u32,
     },
     /// Invalid binary block (decode only).
     InvalidBinaryBlock {
+        /// Block id.
         id: u8,
     },
     /// Invalid binary block length (decode only).
     InvalidBinaryEncoding {
+        /// True if Unicode.
         unicode: bool,
+        /// Character set encoding.
         charset: Charset,
     },
     /// The specified character count does not match the number of specified characters
     /// (decode only).
     InvalidCharCount {
+        /// Specified count.
         specified: u32,
+        /// Realized count.
         realized: usize,
     },
     /// The specified character page does not exist.
     InvalidCharPage {
+        /// Character id.
         char_id: u32,
+        /// Page id.
         page_id: u32,
     },
     /// The specified kerning pair count does not match the number of specified kerning pairs
     /// (decode only).
     InvalidKerningCount {
+        /// Specified count.
         specified: u32,
+        /// Realized count.
         realized: usize,
     },
     /// The specified kerning character does not exist.
     InvalidKerningChar {
+        /// Character id.
         id: u32,
     },
     /// The tagged key name is not valid (decode only).
     InvalidKey {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Invalid key.
         key: String,
     },
     /// The tag name is not valid (decode only).
     InvalidTag {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// Invalid tag.
         tag: String,
     },
     /// The common block is missing.
@@ -121,20 +154,26 @@ pub enum Error {
     NoInfoBlock,
     /// There was an error parsing an entity.
     Parse {
+        /// Line where the error occured.
         line: Option<usize>,
+        /// The entity that failed to parse.
         entity: String,
+        /// The parse error.
         err: String,
     },
     /// The binary version is unsupported (decode only).
     UnsupportedBinaryVersion {
+        /// Binary version.
         version: u8,
     },
     /// Internal error. This should not occur.
     Internal {
+        /// Error.
         err: String,
     },
     /// Io error.
     Io {
+        /// IO error
         err: io::Error,
     },
 }

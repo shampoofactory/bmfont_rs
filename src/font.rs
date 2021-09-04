@@ -45,6 +45,9 @@ pub struct Font {
 }
 
 impl Font {
+    /// Construct a new Font.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[inline(always)]
     pub fn new(
         info: Info,
@@ -117,11 +120,14 @@ pub struct Char {
     pub xadvance: i16,
     /// The texture page where the character image is found.
     pub page: u8,
-    // The texture channel where the character image is found.
+    /// The texture channel where the character image is found.
     pub chnl: Chnl,
 }
 
 impl Char {
+    /// Construct a new Char.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn new(
@@ -175,6 +181,9 @@ pub struct Common {
 }
 
 impl Common {
+    /// Construct a new Common block.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn new(
@@ -258,6 +267,9 @@ pub struct Info {
 }
 
 impl Info {
+    /// Construct a new Info block.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn new(
@@ -290,7 +302,7 @@ impl Info {
         }
     }
 
-    pub fn check_encoding(&self) -> crate::Result<()> {
+    pub(crate) fn check_encoding(&self) -> crate::Result<()> {
         if self.unicode && self.charset != Charset::Null {
             return Err(crate::Error::InvalidBinaryEncoding {
                 unicode: true,
@@ -315,17 +327,17 @@ pub struct Page {
 //     }
 // }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Character padding.
+///
+/// The padding for each character (up, right, down, left).
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(from = "[u8; 4]"),
     serde(into = "[u8; 4]")
 )]
-
-/// Character padding.
-///
-/// The padding for each character (up, right, down, left).
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Padding {
     pub up: u8,
     pub right: u8,
@@ -334,6 +346,9 @@ pub struct Padding {
 }
 
 impl Padding {
+    /// Construct a new Padding.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[inline(always)]
     pub fn new(up: u8, right: u8, down: u8, left: u8) -> Self {
         Self { up, right, down, left }
@@ -373,6 +388,7 @@ impl From<Padding> for [u8; 4] {
     serde(from = "[u8; 2]"),
     serde(into = "[u8; 2]")
 )]
+#[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Spacing {
     pub horizontal: u8,
@@ -380,6 +396,9 @@ pub struct Spacing {
 }
 
 impl Spacing {
+    /// Construct a new Spacing.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[inline(always)]
     pub fn new(horizontal: u8, vertical: u8) -> Self {
         Self { horizontal, vertical }
@@ -427,6 +446,9 @@ pub struct Kerning {
 }
 
 impl Kerning {
+    /// Construct a new Kerning.
+    ///
+    /// N.B. The supplied arguments are not validated.
     #[inline(always)]
     pub fn new(first: u32, second: u32, amount: i16) -> Self {
         Self { first, second, amount }
