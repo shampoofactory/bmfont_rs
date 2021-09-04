@@ -84,10 +84,6 @@ pub enum Error {
         unicode: bool,
         charset: Charset,
     },
-    /// Invalid binary version.
-    InvalidBinaryVersion {
-        version: u8,
-    },
     /// The specified character count does not match the number of specified characters
     /// (decode only).
     InvalidCharCount {
@@ -187,9 +183,6 @@ impl fmt::Display for Error {
             }
             Error::InvalidBinaryEncoding { unicode, charset } => {
                 write!(f, "invalid binary encoding: unicode: {}, charset: {}", unicode, charset)
-            }
-            Error::InvalidBinaryVersion { version } => {
-                write!(f, "invalid binary version: {}", version)
             }
             Error::InvalidCharCount { specified, realized } => {
                 write!(f, "invalid char count: specified: {}, realized: {}", specified, realized)
