@@ -110,13 +110,13 @@ pub const BALTIC: u8 = 186;
 /// assert_eq!(charset, Charset::Undefined("Miniature Giraffe Encoding".to_owned()));
 /// ```
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(from = "&str"),
     serde(into = "String")
 )]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Charset {
     /// Used with Unicode character set encoding to indicate no other character set encoding
     /// is in play.

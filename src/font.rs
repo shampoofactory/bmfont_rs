@@ -12,8 +12,8 @@ use super::charset::Charset;
 ///
 /// This struct holds, in it's entirety, the information contained within a BMFont descriptor file.
 /// This, when paired with the associated texture file/s, allows us to render the described font.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Font {
     /// Font information.
     pub info: Info,
@@ -77,8 +77,8 @@ impl Font {
 ///
 /// This block describes on character in the font.
 /// There is one for each included character in the font.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Char {
     /// The character id.
     pub id: u32,
@@ -126,8 +126,8 @@ impl Char {
 /// Common character description.
 ///
 /// This block holds information common to all characters.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Common {
     /// This is the distance in pixels between each line of text.
     pub line_height: u16,
@@ -190,8 +190,8 @@ impl Common {
 /// Font information.
 ///
 /// This block holds information on how the font was generated.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Info {
     /// This is the name of the true type font.
     pub face: String,
@@ -284,8 +284,8 @@ impl Info {
     }
 }
 
-#[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, Default)]
 pub struct Page {
     pub id: u16,
     pub file: String,
@@ -347,17 +347,16 @@ impl From<Padding> for [u8; 4] {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Character spacing.
+///
+/// The spacing for each character (horizontal, vertical).
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(from = "[u8; 2]"),
     serde(into = "[u8; 2]")
 )]
-
-/// Character spacing.
-///
-/// The spacing for each character (horizontal, vertical).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Spacing {
     pub horizontal: u8,
     pub vertical: u8,
@@ -398,8 +397,8 @@ impl From<Spacing> for [u8; 2] {
 ///
 /// The kerning information is used to adjust the distance between certain characters,
 /// e.g. some characters should be placed closer to each other than others.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct Kerning {
     /// The first character id.
     pub first: u32,
@@ -421,13 +420,13 @@ impl Kerning {
 ///
 /// Used when character packing is specified to describe what is stored in each texture
 /// channel.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(try_from = "u8"),
     serde(into = "u8")
 )]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Packing {
     /// Channel holds glyph data.
@@ -521,13 +520,13 @@ impl Parse for Packing {
 ///     _ => { /* cannot handle */ panic!() }
 /// }
 /// ```
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(try_from = "u8"),
     serde(into = "u8")
 )]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Chnl(u8);
 
 impl Chnl {
