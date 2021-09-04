@@ -55,12 +55,3 @@ impl Default for FontBuilderFnt {
         Self { builder: Default::default() }
     }
 }
-
-#[inline(always)]
-pub fn utf8_string(line: Option<usize>, bytes: &[u8]) -> crate::Result<String> {
-    String::from_utf8(bytes.into()).map_err(|e| crate::Error::Parse {
-        line,
-        entity: "tag".to_owned(),
-        err: format!("UTF8: {}", e),
-    })
-}
