@@ -59,7 +59,7 @@ pub enum Error {
         key: String,
     },
     /// Duplicate page id (decode only).
-    DuplicatePage {
+    DuplicatePageId {
         line: Option<usize>,
         id: u32,
     },
@@ -175,7 +175,7 @@ impl fmt::Display for Error {
             Error::DuplicateKey { line, key } => {
                 write!(f, "{}duplicate key: '{}'", format_line(line), key)
             }
-            Error::DuplicatePage { line, id } => {
+            Error::DuplicatePageId { line, id } => {
                 write!(f, "{}duplicate page id: {}", format_line(line), id)
             }
             Error::DuplicateTag { line, tag } => {
