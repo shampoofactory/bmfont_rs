@@ -226,3 +226,52 @@ fn xml_text_med_cmp() -> Result<(), Box<dyn Error>> {
 fn validate_small() -> crate::Result<()> {
     small().validate_references()
 }
+
+macro_rules! err {
+    ($name:ident, $op:expr, $err:pat) => {
+        #[test]
+        fn $name() {
+            match $op {
+                Err($err) => {}
+                Err(e) => panic!("unexpected error: {}", e),
+                Ok(_) => panic!("error expected"),
+            }
+        }
+    };
+}
+
+err!(
+    text_duplicate_key,
+    text::from_bytes(include_bytes!("../../data/bad/duplicate_key.txt").as_ref()),
+    crate::Error::DuplicateKey { .. }
+);
+
+err!(
+    text_invalid_char_count,
+    text::from_bytes(include_bytes!("../../data/bad/invalid_char_count.txt").as_ref()),
+    crate::Error::InvalidCharCount { .. }
+);
+
+err!(
+    text_no_info_block,
+    text::from_bytes(include_bytes!("../../data/bad/no_info.txt").as_ref()),
+    crate::Error::NoInfoBlock
+);
+
+err!(
+    text_no_common_block,
+    text::from_bytes(include_bytes!("../../data/bad/no_common.txt").as_ref()),
+    crate::Error::NoCommonBlock
+);
+
+err!(
+    text_invalid_tag,
+    text::from_bytes(include_bytes!("../../data/bad/invalid_tag.txt").as_ref()),
+    crate::Error::InvalidTag { .. }
+);
+
+err!(
+    text_invalid_value,
+    text::from_bytes(include_bytes!("../../data/bad/invalid_value.txt").as_ref()),
+    crate::Error::InvalidValue { .. }
+);
