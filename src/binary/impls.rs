@@ -457,13 +457,21 @@ impl UnpackDyn<C> for String {
             }
             i += 1;
         }
-        Err(crate::Error::Parse { line: None, err: "CString: missing NUL".to_owned() })
+        Err(crate::Error::Parse {
+            line: None,
+            entity: "CString".to_owned(),
+            err: "missing NUL".to_owned(),
+        })
     }
 }
 
 fn c_string(bytes: &[u8]) -> crate::Result<&[u8]> {
     if bytes.contains(&0) {
-        Err(crate::Error::Parse { line: None, err: "CString: contains NUL".to_owned() })
+        Err(crate::Error::Parse {
+            line: None,
+            entity: "CString".to_owned(),
+            err: "contains NUL".to_owned(),
+        })
     } else {
         Ok(bytes)
     }
@@ -472,12 +480,18 @@ fn c_string(bytes: &[u8]) -> crate::Result<&[u8]> {
 fn utf8_string(vec: Vec<u8>) -> crate::Result<String> {
     match String::from_utf8(vec) {
         Ok(u) => Ok(u),
-        Err(err) => Err(crate::Error::Parse { line: None, err: format!("String: {}", err) }),
+        Err(e) => {
+            Err(crate::Error::Parse { line: None, entity: "String".to_owned(), err: e.to_string() })
+        }
     }
 }
 
 fn parse_u8<T: TryFrom<u8, Error = ParseError>>(u: u8) -> crate::Result<T> {
-    T::try_from(u).map_err(|e| crate::Error::Parse { line: None, err: e.to_string() })
+    T::try_from(u).map_err(|e| crate::Error::Parse {
+        line: None,
+        entity: "String".to_owned(),
+        err: e.to_string(),
+    })
 }
 
 #[cfg(test)]

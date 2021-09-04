@@ -92,9 +92,13 @@ pub trait UnpackDyn<T = ()>: PackDynLen<T> + Sized {
 }
 
 pub fn overflow<T>() -> crate::Result<T> {
-    Err(crate::Error::Parse { line: None, err: "buffer overflow".to_owned() })
+    Err(crate::Error::Parse { line: None, entity: "buffer".to_owned(), err: "overflow".to_owned() })
 }
 
 pub fn underflow<T>() -> crate::Result<T> {
-    Err(crate::Error::Parse { line: None, err: "buffer underflow".to_owned() })
+    Err(crate::Error::Parse {
+        line: None,
+        entity: "buffer".to_owned(),
+        err: "underflow".to_owned(),
+    })
 }

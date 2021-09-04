@@ -4,8 +4,11 @@ use std::io;
 
 pub fn to_string(font: &Font) -> crate::Result<String> {
     let vec = to_vec(font)?;
-    String::from_utf8(vec)
-        .map_err(|e| crate::Error::Parse { line: None, err: format!("UTF8: {}", e) })
+    String::from_utf8(vec).map_err(|e| crate::Error::Parse {
+        line: None,
+        entity: "font".to_owned(),
+        err: e.to_string(),
+    })
 }
 
 pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {

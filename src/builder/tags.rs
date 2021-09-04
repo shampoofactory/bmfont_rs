@@ -22,9 +22,11 @@ impl<'a> Tags<'a> for TaggedAttributes<'a> {
     fn next_tag(&mut self) -> crate::Result<Option<Tag<'a>>> {
         match self.tag() {
             Ok(u) => Ok(u.map(|tag| Tag::new(tag, Some(self.line())))),
-            Err(err) => {
-                Err(crate::Error::Parse { line: Some(self.line()), err: format!("tags: {}", err) })
-            }
+            Err(e) => Err(crate::Error::Parse {
+                line: Some(self.line()),
+                entity: "tag".to_owned(),
+                err: e.to_string(),
+            }),
         }
     }
 }

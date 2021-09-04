@@ -272,6 +272,6 @@ err!(
 
 err!(
     text_invalid_value,
-    text::from_bytes(include_bytes!("../../data/bad/invalid_value.txt").as_ref()),
-    crate::Error::InvalidValue { .. }
+    text::from_bytes(include_bytes!("../../data/bad/bad_int.txt").as_ref()),
+    crate::Error::Parse { .. }
 );

@@ -25,6 +25,7 @@ impl<'a> Attributes<'a> for TaggedAttributes<'a> {
             Ok(u) => Ok(u.map(|(key, value)| Attribute::new(key, value, Some(self.line())))),
             Err(err) => Err(crate::Error::Parse {
                 line: Some(self.line()),
+                entity: "attribute".to_owned(),
                 err: format!("attributes: {}", err),
             }),
         }

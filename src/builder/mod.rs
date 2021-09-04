@@ -5,7 +5,6 @@ use crate::charset::Charset;
 use crate::font::{Char, Chnl, Common, Font, Info, Padding, Page, Spacing};
 use crate::font::{Kerning, Packing};
 use crate::parse::Parse;
-use crate::util;
 use crate::Error;
 
 use attributes::{Attribute, Attributes};
@@ -165,13 +164,17 @@ macro_rules! implement_load {
                                     Err(err) => {
                                         let err = err.to_string();
                                         let key = String::from_utf8_lossy($key).into();
-                                        return Err(Error::InvalidValue{ line, key, err });
+                                        return Err(Error::Parse{ line, entity:key, err });
                                     }
                                 }
                             },
                         )*
-                        k => {
-                            let key = util::utf8_string(line, k)?;
+                        key => {
+                            let key = String::from_utf8(key.into()).map_err(|e| crate::Error::Parse {
+                                line,
+                                entity: "key".to_owned(),
+                                err: e.to_string(),
+                            })?;
                             return Err(Error::InvalidKey { line, key })
 
                         },

@@ -4,7 +4,6 @@ mod error;
 mod font;
 mod parse;
 mod tagged_attributes;
-mod util;
 
 #[cfg(test)]
 mod tests;

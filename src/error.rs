@@ -119,19 +119,14 @@ pub enum Error {
         line: Option<usize>,
         tag: String,
     },
-    /// The tagged key value is not valid (decode only).
-    InvalidValue {
-        line: Option<usize>,
-        key: String,
-        err: String,
-    },
     /// The common block is missing.
     NoCommonBlock,
     /// The info block is missing.
     NoInfoBlock,
-    /// There was an error parsing a value.
+    /// There was an error parsing an entity.
     Parse {
         line: Option<usize>,
+        entity: String,
         err: String,
     },
     /// The binary version is unsupported (decode only).
@@ -214,17 +209,14 @@ impl fmt::Display for Error {
             Error::InvalidTag { line, tag } => {
                 write!(f, "{}invalid tag: '{}'", format_line(line), tag)
             }
-            Error::InvalidValue { line, key, err } => {
-                write!(f, "{}invalid value: '{}', {}", format_line(line), key, err)
-            }
             Error::NoCommonBlock => {
                 write!(f, "no common block")
             }
             Error::NoInfoBlock => {
                 write!(f, "no info block")
             }
-            Error::Parse { line, err } => {
-                write!(f, "{}parse error: {}", format_line(line), err)
+            Error::Parse { line, entity, err } => {
+                write!(f, "{}parse error: {}: {}", format_line(line), entity, err)
             }
             Error::UnsupportedBinaryVersion { version } => {
                 write!(f, "unsupported version: {}", version)

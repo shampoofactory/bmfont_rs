@@ -2,7 +2,6 @@ use crate::builder::tags::{Tag, Tags};
 use crate::builder::FontBuilder;
 use crate::font::Font;
 use crate::tagged_attributes::TaggedAttributes;
-use crate::util;
 
 use std::io;
 
@@ -38,7 +37,11 @@ impl FontBuilderFnt {
                 b"kerning" => self.builder.kerning(&mut attributes),
                 tag => {
                     let line = Some(attributes.line());
-                    let tag = util::utf8_string(line, tag)?;
+                    let tag = String::from_utf8(tag.into()).map_err(|e| crate::Error::Parse {
+                        line,
+                        entity: "tag".to_owned(),
+                        err: e.to_string(),
+                    })?;
                     Err(crate::Error::InvalidTag { line, tag })
                 }
             }?;
@@ -51,4 +54,13 @@ impl Default for FontBuilderFnt {
     fn default() -> Self {
         Self { builder: Default::default() }
     }
+}
+
+#[inline(always)]
+pub fn utf8_string(line: Option<usize>, bytes: &[u8]) -> crate::Result<String> {
+    String::from_utf8(bytes.into()).map_err(|e| crate::Error::Parse {
+        line,
+        entity: "tag".to_owned(),
+        err: format!("UTF8: {}", e),
+    })
 }
