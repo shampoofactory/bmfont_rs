@@ -220,7 +220,6 @@ fn render(src: &GrayImage, src_rect: Rec2, dst: &mut GrayImage, dst_pos: Vec2) {
 /// ```
 /// cargo run --example render ~/Desktop/lorem.png
 /// ```
-
 fn main() -> Result<(), Box<dyn Error>> {
     // Get output file from command line arguments.
     let args: Vec<String> = env::args().collect();
