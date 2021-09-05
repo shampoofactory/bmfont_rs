@@ -239,10 +239,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut render_surface = RenderSurface::new(Vec2::new(SURFACE_WIDTH, SURFACE_HEIGHT));
 
     // Ok! Let's print something.
-    render_surface.println(&render_font, "Lorem ipsum dolor sit amet,");
-    render_surface.println(&render_font, "consectetur adipiscing elit,");
-    render_surface.println(&render_font, "sed do eiusmod tempor incididunt");
-    render_surface.println(&render_font, "ut labore et dolore magna aliqua.");
+    render_surface.println(&render_font, "  Lorem ipsum dolor sit amet,");
+    render_surface.println(&render_font, "  consectetur adipiscing elit,");
+    render_surface.println(&render_font, "  sed do eiusmod tempor incididunt");
+    render_surface.println(&render_font, "  ut labore et dolore magna aliqua.");
 
     // Let's save and make a run for it.
     render_surface.save(file)?;
