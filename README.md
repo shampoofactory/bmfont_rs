@@ -55,10 +55,16 @@ Store a BMFont binary file.
  }
  ```
 
-TODO: Additional examples folder.
+## Examples folder
 
+![Alt text](data/examples/render_out.png)
 
-TODO: Example of how to render basic fonts.
+The [examples](examples) folder contains additional examples including [render.rs](examples/render.rs) which was used to generate the above image.
+
+Examples are run from the project root using the command specified with the `main` comment e.g.
+```bash
+cargo run --example render ~/Desktop/lorem.png
+```
 
 ## XML
 
