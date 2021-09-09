@@ -23,8 +23,8 @@ use std::io;
 use std::io::prelude::*;
 use std::fs;
 fn main() -> bmfont_rs::Result<()> {
-    let mut buf = fs::read("font.bin")?;
-    let font = bmfont_rs::binary::from_bytes(&buf)?;
+    let mut buf = fs::read("font.fnt")?;
+    let font = bmfont_rs::text::from_bytes(&buf)?;
     println!("{:?}", font);
     Ok(())
 }
@@ -38,8 +38,8 @@ Store a BMFont text file.
 
  fn main() -> bmfont_rs::Result<()> {
      let font = bmfont_rs::Font::default();
-     let mut writer = File::create("font.bin")?;
-     bmfont_rs::binary::to_writer(&mut writer, &font)?;
+     let mut writer = File::create("font.fnt")?;
+     bmfont_rs::text::to_writer(&mut writer, &font)?;
      Ok(())
  }
  ```

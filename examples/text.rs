@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Text in:");
     println!("{}", &src);
 
-    // Import2
+    // Import
     let font = bmfont_rs::text::from_str(src)?;
     println!("Font:");
     println!("{:#?}\n", font);
