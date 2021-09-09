@@ -6,11 +6,9 @@ BMFont font descriptor parsing library.
 Manipulate, import and export [BMFont](http://www.angelcode.com/products/bmfont/) descriptor
 files in text, binary, XML formats and more.
 
-## TODO - 95% there
+## TODO - 97.5% there
 
 * crate documentation + proofread
-* examples folder, notably a rendered text example
-* check kcov coverage
 * minimum Rust version
 * upload to crates.io
 
@@ -20,13 +18,13 @@ This crate provides manipulation, import and export functions for BMFont descrip
 
 The core data object is the [Font](crate::Font).
 This object holds, in it's entirety, the information contained within a BMFont descriptor file.
-When paired with the associated texture file/s, allows us to render the described font.
+Font, when paired with the associated texture file/s, allows us to render the described font.
 
 This crate contains no unsafe code and minimal dependencies.
 
-## Examples
+## Basic usage
 
-Load a BMFont text file.
+Load a BMFont text format file.
 
 ```rust
 use std::io;
@@ -34,14 +32,14 @@ use std::io::prelude::*;
 use std::fs;
 
 fn main() -> bmfont_rs::Result<()> {
-    let mut buf = fs::read("font.txt")?;
+    let mut buf = fs::read("font.fnt")?;
     let font = bmfont_rs::text::from_bytes(&buf)?;
     println!("{:?}", font);
     Ok(())
 }
 ```
 
-Store a BMFont binary file.
+Store a BMFont text format file.
  ```rust
  use std::io;
  use std::io::prelude::*;
@@ -49,35 +47,85 @@ Store a BMFont binary file.
 
  fn main() -> bmfont_rs::Result<()> {
      let font = bmfont_rs::Font::default();
-     let mut writer = File::create("font.bin")?;
-     bmfont_rs::binary::to_writer(&mut writer, &font)?;
+     let mut writer = File::create("font.fnt")?;
+     bmfont_rs::text::to_writer(&mut writer, &font)?;
      Ok(())
  }
  ```
 
-## Examples folder
+Additonal format and source/ destination parameters are supported.
+Kindly refer to the documentation for details.
+
+## Examples: render
 
 ![Alt text](data/examples/render_out.png)
 
-The [examples](examples) folder contains additional examples including [render.rs](examples/render.rs) which was used to generate the above image.
+The above text was generated with the [render.rs](examples/render.rs) example.
 
-Examples are run from the project root using the command specified with the `main` comment e.g.
+If you are uncertain how one might use a BMFont descriptor to render output, this example would be worth studying.
+Substituting your own graphics backend should not be too difficult.
+
+
+Due to the numerous graphics backends and usage requirements, this crate makes no attempt at offering a universal rendering solution.
+
+Execute from the project root with:
+```bash
+cargo run --example render FILE
+```
+
+Where FILE is the output image destination (png or jpg) extension:
+
 ```bash
 cargo run --example render ~/Desktop/lorem.png
 ```
 
-## XML
+## Examples: text format
 
-XML support is featured gated with `xml` and pulls in additional dependencies,
-namely [roxmltree](https://github.com/RazrFalcon/roxmltree).
+BMFont text format files are ubiquitous, human readable and easily tinkered with.
+However, not all tools obey the correct parameter types or constraints, which may result in incompatibility.
 
-TODO: cargo.toml entry and code example
+Execute from the project root with:
+```bash
+cargo run --example text
+```
 
-## Additional formats
+## Examples: binary
 
-[Font](crate::Font) implements [Serde](https://serde.rs) `Serialize` and `Deserialize`.
+BMFont binary files are compact, unambiguous and efficient to parse.
+However, tooling support may be limited and they are not human readable.
 
-TODO: Fill and describe JSON.
+Execute from the project root with:
+```bash
+cargo run --example binary
+```
+
+## Examples: XML
+
+XML functionality is feature gated: `--feature xml`.
+When activated, additional dependencies are pulled in assist with XML processing.
+
+Execute from the project root with:
+```bash
+cargo run --example xml --features xml
+```
+
+## Examples: JSON
+
+JSON is not natively supported.
+However, as we do support [Serde](https://github.com/serde-rs/serde), we can easily cobble together support with [Serde JSON](https://github.com/serde-rs/serde).
+
+By default our Serde serializers map boolean types to JSON boolean types: `true` and `false`.
+However, at least one JSON BMFont parser expects integer boolean types: `1` and `0`.
+To facilitate the latter we can pass `--feature serde_boolint`, which casts boolean values to integers and vice versa.
+
+Execute from the project root with:
+```bash
+cargo run --example json --features serde`
+```
+
+```bash
+cargo run --example json --features "serde, serde_boolint"`
+```
 
 ## BMFont
 
