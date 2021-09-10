@@ -31,7 +31,7 @@ To use:
 
 Example: import a BMFont text format file.
 
-```rust
+```no_run
 use std::io;
 use std::io::prelude::*;
 use std::fs;
@@ -45,7 +45,7 @@ fn main() -> bmfont_rs::Result<()> {
 ```
 
 Example: export a BMFont text format file.
- ```rust
+ ```no_run
  use std::io;
  use std::io::prelude::*;
  use std::fs::File;
