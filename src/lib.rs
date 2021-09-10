@@ -7,21 +7,35 @@ files in text, binary, XML formats and more.
 
 ## Overview
 
-This crate provides import and export functions for BMFont descriptor files.
-
+This crate provides manipulation, import and export functions for BMFont descriptor files.
 
 The core data object is the [Font](crate::Font).
 This object holds, in it's entirety, the information contained within a BMFont descriptor file.
-This, when paired with the associated texture file/s, allows us to render the described font.
+Font, when paired with the associated texture file/s, allows us to render the described bit-mapped
+text.
 
-## Examples
+This crate contains no unsafe code and minimal dependencies.
 
-Load a BMFont text file.
+## Basic usage
 
-```no_run
+The modules are organized around the core BMFont file formats:
+- `text` : text format
+- `binary` : binary format
+- `xml` : XML format, requires: `--features xml`
+
+Each module is provides a number of import `from_...` and export: `to_...` functions.
+
+To use:
+1. Select the desired BMFont format you want to work with.
+2. Select the appropriate from/ to methods based on the data structures you want to work with.
+
+Example: import a BMFont text format file.
+
+```rust
 use std::io;
 use std::io::prelude::*;
 use std::fs;
+
 fn main() -> bmfont_rs::Result<()> {
     let mut buf = fs::read("font.fnt")?;
     let font = bmfont_rs::text::from_bytes(&buf)?;
@@ -30,8 +44,8 @@ fn main() -> bmfont_rs::Result<()> {
 }
 ```
 
-Store a BMFont text file.
- ```no_run
+Example: export a BMFont text format file.
+ ```rust
  use std::io;
  use std::io::prelude::*;
  use std::fs::File;
@@ -44,19 +58,39 @@ Store a BMFont text file.
  }
  ```
 
-TODO: Additional examples folder.
-TODO: Example of how to render basic fonts.
+## Rendering fonts
 
-## XML
+The [render.rs](https://github.com/shampoofactory/bmfont_rs/blob/main/examples/render.rs)
+example, demonstrates a simple way to render font text to an image.
+Substituting your own graphics backend should not be too difficult.
 
-XML support is featured gated with `xml` and pulls in additional dependencies,
-namely [roxmltree](https://github.com/RazrFalcon/roxmltree).
+To view the example's output and for details on how to run it, kindly refer to the repository
+[README](https://github.com/shampoofactory/bmfont_rs/blob/main/README.md#examples-render).
 
-## Additional formats
+Due to the numerous graphics back-ends and usage requirements, this crate makes no attempt at
+offering a universal rendering solution.
 
-[Font](crate::Font) implements [Serde](https://serde.rs) `Serialize` and `Deserialize`.
+## Serde
 
-TODO: Fill and describe JSON.
+[Font] implements [Serde's](https://github.com/serde-rs/serde) `serialize` and `deserialize` traits.
+These are feature gated and require: `--features serde`.
+
+## JSON
+
+The [json.rs](https://github.com/shampoofactory/bmfont_rs/blob/main/examples/json.rs) example
+demonstrates this.
+
+For details on how to run the example, kindly refer to the repository
+[README](https://github.com/shampoofactory/bmfont_rs/blob/main/README.md#examples-json).
+
+JSON is not natively supported.
+However, as we do support [Serde](https://github.com/serde-rs/serde), we can easily cobble together
+support with [Serde JSON](https://github.com/serde-rs/serde).
+
+By default our Serde serializers map boolean types to JSON boolean types: `true` and `false`.
+However, at least one JSON BMFont parser expects integer boolean types: `1` and `0`.
+To facilitate the latter we can pass `--features serde_boolint`, which casts boolean values to
+integers and vice versa.
 
 ## BMFont
 
@@ -77,11 +111,6 @@ Licensed under either of
    ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
-
-## Alternatives
-
-TODO
-
 */
 mod builder;
 mod charset;
