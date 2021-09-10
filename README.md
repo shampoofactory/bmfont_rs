@@ -6,25 +6,30 @@ BMFont font descriptor parsing library.
 Manipulate, import and export [BMFont](http://www.angelcode.com/products/bmfont/) descriptor
 files in text, binary, XML formats and more.
 
-## TODO - 97.5% there
-
-* crate documentation + proofread
-* minimum Rust version
-* upload to crates.io
-
 ## Overview
 
 This crate provides manipulation, import and export functions for BMFont descriptor files.
 
 The core data object is the [Font](crate::Font).
 This object holds, in it's entirety, the information contained within a BMFont descriptor file.
-Font, when paired with the associated texture file/s, allows us to render the described font.
+Font, when paired with the associated texture file/s, allows us to render the described bit-mapped text.
 
 This crate contains no unsafe code and minimal dependencies.
 
 ## Basic usage
 
-Load a BMFont text format file.
+The modules are organized around the core BMFont file formats:
+- `text` : text format
+- `binary` : binary format
+- `xml` : XML format, requires: `--features xml`
+
+Each module is provides a number of import `from_...` and export: `to_...` functions.
+
+To use:
+1. Select the desired BMFont format you want to work with.
+2. Select the appropriate from/ to methods based on the data structures you want to work with.
+
+Example: import a BMFont text format file.
 
 ```rust
 use std::io;
@@ -39,7 +44,7 @@ fn main() -> bmfont_rs::Result<()> {
 }
 ```
 
-Store a BMFont text format file.
+Example: export a BMFont text format file.
  ```rust
  use std::io;
  use std::io::prelude::*;
@@ -101,7 +106,7 @@ cargo run --example binary
 
 ## Examples: XML
 
-XML functionality is feature gated: `--feature xml`.
+XML functionality is feature gated: `--features xml`.
 When activated, additional dependencies are pulled in assist with XML processing.
 
 Execute from the project root with:
@@ -116,7 +121,7 @@ However, as we do support [Serde](https://github.com/serde-rs/serde), we can eas
 
 By default our Serde serializers map boolean types to JSON boolean types: `true` and `false`.
 However, at least one JSON BMFont parser expects integer boolean types: `1` and `0`.
-To facilitate the latter we can pass `--feature serde_boolint`, which casts boolean values to integers and vice versa.
+To facilitate the latter we can pass `--features serde_boolint`, which casts boolean values to integers and vice versa.
 
 Execute from the project root with:
 ```bash
@@ -146,7 +151,3 @@ Licensed under either of
    ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
-
-## Alternatives
-
-TODO
