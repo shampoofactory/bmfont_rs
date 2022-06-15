@@ -11,6 +11,7 @@ use attributes::{Attribute, Attributes};
 
 #[derive(Debug)]
 pub struct FontBuilder {
+    relaxed: bool,
     info: Option<Info>,
     common: Option<Common>,
     pages: Vec<String>,
@@ -21,17 +22,26 @@ pub struct FontBuilder {
 }
 
 impl FontBuilder {
-    pub fn build(mut self) -> crate::Result<Font> {
-        if let Some(specified) = self.char_count {
-            let realized = self.chars.len();
-            if specified as usize != realized {
-                return Err(Error::InvalidCharCount { specified, realized });
-            }
+    pub fn relaxed() -> Self {
+        Self {
+            relaxed: true,
+            ..Self::default()
         }
-        if let Some(specified) = self.kerning_count {
-            let realized = self.kernings.len();
-            if specified as usize != realized {
-                return Err(Error::InvalidKerningCount { specified, realized });
+    }
+
+    pub fn build(mut self) -> crate::Result<Font> {
+        if !self.relaxed {
+            if let Some(specified) = self.char_count {
+                let realized = self.chars.len();
+                if specified as usize != realized {
+                    return Err(Error::InvalidCharCount { specified, realized });
+                }
+            }
+            if let Some(specified) = self.kerning_count {
+                let realized = self.kernings.len();
+                if specified as usize != realized {
+                    return Err(Error::InvalidKerningCount { specified, realized });
+                }
             }
         }
         let info = self.info.take().ok_or(Error::NoInfoBlock)?;
@@ -128,6 +138,7 @@ impl FontBuilder {
 impl Default for FontBuilder {
     fn default() -> Self {
         Self {
+            relaxed: false,
             info: Option::None,
             common: Option::None,
             pages: Vec::default(),

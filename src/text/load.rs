@@ -57,6 +57,16 @@ pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
     FontBuilderFnt::default().load_bytes(bytes)?.build()
 }
 
+/// Load text format font with relaxed constraints check.
+///
+/// This function is similar to [from_bytes], but it allows somewhat malformed files
+/// to still be loaded. For example when the specified character count differs from
+/// the actual amount of characters in file it will load all of them and not return
+/// an error.
+pub fn from_bytes_relaxed(bytes: &[u8]) -> crate::Result<Font> {
+    FontBuilderFnt::relaxed().load_bytes(bytes)?.build()
+}
+
 /// Read text format font.
 ///
 /// Read a font from the specified text format reader.
@@ -91,6 +101,10 @@ pub struct FontBuilderFnt {
 }
 
 impl FontBuilderFnt {
+    pub fn relaxed() -> Self {
+        Self { builder: FontBuilder::relaxed() }
+    }
+
     pub fn load_bytes(mut self, bytes: &[u8]) -> crate::Result<FontBuilder> {
         let mut attributes = TaggedAttributes::from_bytes(bytes);
         while let Some(Tag { tag, line }) = attributes.next_tag()? {
