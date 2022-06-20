@@ -1,5 +1,5 @@
 use crate::binary::impls::{Magic, C, V3};
-use crate::font::*;
+use crate::{font::*, LoadSettings};
 
 use super::constants::*;
 use super::impls::{Block, V1, V2};
@@ -30,10 +30,18 @@ use std::io;
 ///     Ok(())
 /// }
 /// ```
-pub fn from_reader<R: io::Read>(mut reader: R) -> crate::Result<Font> {
+pub fn from_reader<R: io::Read>(reader: R) -> crate::Result<Font> {
+    from_reader_ext(reader, &Default::default())
+}
+
+/// Read binary format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_reader_ext<R: io::Read>(mut reader: R, settings: &LoadSettings) -> crate::Result<Font> {
     let mut vec = Vec::default();
     reader.read_to_end(&mut vec)?;
-    from_bytes(vec.as_slice())
+    from_bytes_ext(vec.as_slice(), settings)
 }
 
 /// Load binary format font.
@@ -58,16 +66,25 @@ pub fn from_reader<R: io::Read>(mut reader: R) -> crate::Result<Font> {
 ///     Ok(())
 /// }
 /// ```
-pub fn from_bytes(mut bytes: &[u8]) -> crate::Result<Font> {
+pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
+    from_bytes_ext(bytes, &Default::default())
+}
+
+/// Load binary format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_bytes_ext(mut bytes: &[u8], settings: &LoadSettings) -> crate::Result<Font> {
     let magic: Magic = Unpack::<()>::unpack_take(&mut bytes)?;
-    let mut builder = Assist::new(bytes, magic.version()?)?;
+    let mut builder = FontBuilderBinary::new(bytes, settings, magic.version()?)?;
     builder.load()?;
     builder.build()
 }
 
 #[derive(Debug)]
-struct Assist<'a> {
+struct FontBuilderBinary<'a> {
     src: &'a [u8],
+    _settings: &'a LoadSettings,
     version: u8,
     info: Option<Info>,
     common: Option<Common>,
@@ -76,11 +93,12 @@ struct Assist<'a> {
     kernings: Vec<Kerning>,
 }
 
-impl<'a> Assist<'a> {
-    fn new(src: &'a [u8], version: u8) -> crate::Result<Self> {
+impl<'a> FontBuilderBinary<'a> {
+    fn new(src: &'a [u8], settings: &'a LoadSettings, version: u8) -> crate::Result<Self> {
         if version == 3 {
             Ok(Self {
                 src,
+                _settings: settings,
                 version,
                 info: None,
                 common: None,

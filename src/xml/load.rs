@@ -3,6 +3,7 @@ extern crate roxmltree as xml;
 use crate::builder::attributes::{Attribute, Attributes};
 use crate::builder::FontBuilder;
 use crate::font::Font;
+use crate::LoadSettings;
 
 use std::io;
 use std::mem;
@@ -30,7 +31,15 @@ use std::mem;
 /// }
 /// ```
 pub fn from_str(src: &str) -> crate::Result<Font> {
-    FontBuilderXml::default().load_str(src)?.build()
+    from_str_ext(src, &Default::default())
+}
+
+/// Load XML format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_str_ext(src: &str, settings: &LoadSettings) -> crate::Result<Font> {
+    FontBuilderXml::new(settings).load_str(src)?.build()
 }
 
 /// Load XML format font.
@@ -56,11 +65,22 @@ pub fn from_str(src: &str) -> crate::Result<Font> {
 /// }
 /// ```
 pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
-    from_str(std::str::from_utf8(bytes).map_err(|e| crate::Error::Parse {
-        line: None,
-        entity: "font".to_owned(),
-        err: e.to_string(),
-    })?)
+    from_bytes_ext(bytes, &Default::default())
+}
+
+/// Load XML format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_bytes_ext(bytes: &[u8], settings: &LoadSettings) -> crate::Result<Font> {
+    from_str_ext(
+        std::str::from_utf8(bytes).map_err(|e| crate::Error::Parse {
+            line: None,
+            entity: "font".to_owned(),
+            err: e.to_string(),
+        })?,
+        settings,
+    )
 }
 
 /// Read XML format font.
@@ -86,19 +106,31 @@ pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
 ///     Ok(())
 /// }
 /// ```
-pub fn from_reader<R: io::Read>(mut reader: R) -> crate::Result<Font> {
+pub fn from_reader<R: io::Read>(reader: R) -> crate::Result<Font> {
+    from_reader_ext(reader, &Default::default())
+}
+
+/// Read XML format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_reader_ext<R: io::Read>(mut reader: R, settings: &LoadSettings) -> crate::Result<Font> {
     let mut vec = Vec::default();
     reader.read_to_end(&mut vec)?;
-    from_bytes(&vec)
+    from_bytes_ext(&vec, settings)
 }
 
-#[derive(Debug, Default)]
-pub struct FontBuilderXml {
-    builder: FontBuilder,
+#[derive(Debug)]
+pub struct FontBuilderXml<'a> {
+    builder: FontBuilder<'a>,
 }
 
-impl FontBuilderXml {
-    pub fn load_str(mut self, src: &str) -> crate::Result<FontBuilder> {
+impl<'a> FontBuilderXml<'a> {
+    pub fn new(settings: &'a LoadSettings) -> Self {
+        Self { builder: FontBuilder::new(settings) }
+    }
+
+    pub fn load_str(mut self, src: &str) -> crate::Result<FontBuilder<'a>> {
         let document = xml::Document::parse(src).map_err(|e| crate::Error::Parse {
             line: None,
             entity: "font".to_owned(),
