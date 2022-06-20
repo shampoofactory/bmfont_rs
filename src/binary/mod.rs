@@ -7,5 +7,5 @@ mod load;
 mod pack;
 mod store;
 
-pub use load::{from_bytes, from_reader};
+pub use load::{from_bytes, from_bytes_ext, from_reader, from_reader_ext};
 pub use store::{to_vec, to_writer};

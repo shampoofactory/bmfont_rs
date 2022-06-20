@@ -2,6 +2,7 @@ use crate::builder::tags::{Tag, Tags};
 use crate::builder::FontBuilder;
 use crate::font::Font;
 use crate::tagged_attributes::TaggedAttributes;
+use crate::LoadSettings;
 
 use std::io;
 
@@ -28,7 +29,15 @@ use std::io;
 /// }
 /// ```
 pub fn from_str(src: &str) -> crate::Result<Font> {
-    from_bytes(src.as_bytes())
+    from_str_ext(src, &Default::default())
+}
+
+/// Load text format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_str_ext(src: &str, settings: &LoadSettings) -> crate::Result<Font> {
+    from_bytes_ext(src.as_bytes(), settings)
 }
 
 /// Load text format font.
@@ -54,17 +63,15 @@ pub fn from_str(src: &str) -> crate::Result<Font> {
 /// }
 /// ```
 pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
-    FontBuilderFnt::default().load_bytes(bytes)?.build()
+    from_bytes_ext(bytes, &Default::default())
 }
 
-/// Load text format font with relaxed constraints check.
+/// Load text format font with the specified import behavior settings.
 ///
-/// This function is similar to [from_bytes], but it allows somewhat malformed files
-/// to still be loaded. For example when the specified character count differs from
-/// the actual amount of characters in file it will load all of them and not return
-/// an error.
-pub fn from_bytes_relaxed(bytes: &[u8]) -> crate::Result<Font> {
-    FontBuilderFnt::relaxed().load_bytes(bytes)?.build()
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_bytes_ext(bytes: &[u8], settings: &LoadSettings) -> crate::Result<Font> {
+    FontBuilderText::new(settings).load_bytes(bytes)?.build()
 }
 
 /// Read text format font.
@@ -90,22 +97,30 @@ pub fn from_bytes_relaxed(bytes: &[u8]) -> crate::Result<Font> {
 ///     Ok(())
 /// }
 /// ```
-pub fn from_reader<R: io::Read>(mut reader: R) -> crate::Result<Font> {
+pub fn from_reader<R: io::Read>(reader: R) -> crate::Result<Font> {
+    from_reader_ext(reader, &Default::default())
+}
+
+/// Read text format font with the specified import behavior settings.
+///
+/// This function specifies Font import behavior, allowing us to import certain partially
+/// broken/ non-compliant BMFont files.
+pub fn from_reader_ext<R: io::Read>(mut reader: R, settings: &LoadSettings) -> crate::Result<Font> {
     let mut vec = Vec::default();
     reader.read_to_end(&mut vec)?;
-    from_bytes(&vec)
+    from_bytes_ext(&vec, settings)
 }
 
-pub struct FontBuilderFnt {
-    builder: FontBuilder,
+pub struct FontBuilderText<'a> {
+    builder: FontBuilder<'a>,
 }
 
-impl FontBuilderFnt {
-    pub fn relaxed() -> Self {
-        Self { builder: FontBuilder::relaxed() }
+impl<'a> FontBuilderText<'a> {
+    pub fn new(settings: &'a LoadSettings) -> Self {
+        Self { builder: FontBuilder::new(settings) }
     }
 
-    pub fn load_bytes(mut self, bytes: &[u8]) -> crate::Result<FontBuilder> {
+    pub fn load_bytes(mut self, bytes: &[u8]) -> crate::Result<FontBuilder<'a>> {
         let mut attributes = TaggedAttributes::from_bytes(bytes);
         while let Some(Tag { tag, line }) = attributes.next_tag()? {
             match tag {
@@ -128,11 +143,5 @@ impl FontBuilderFnt {
             }?;
         }
         Ok(self.builder)
-    }
-}
-
-impl Default for FontBuilderFnt {
-    fn default() -> Self {
-        Self { builder: Default::default() }
     }
 }

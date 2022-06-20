@@ -5,13 +5,13 @@ use crate::charset::Charset;
 use crate::font::{Char, Chnl, Common, Font, Info, Padding, Page, Spacing};
 use crate::font::{Kerning, Packing};
 use crate::parse::Parse;
-use crate::Error;
+use crate::{Error, LoadSettings};
 
 use attributes::{Attribute, Attributes};
 
 #[derive(Debug)]
-pub struct FontBuilder {
-    relaxed: bool,
+pub struct FontBuilder<'a> {
+    settings: &'a LoadSettings,
     info: Option<Info>,
     common: Option<Common>,
     pages: Vec<String>,
@@ -21,16 +21,22 @@ pub struct FontBuilder {
     kerning_count: Option<u32>,
 }
 
-impl FontBuilder {
-    pub fn relaxed() -> Self {
+impl<'a> FontBuilder<'a> {
+    pub fn new(settings: &'a LoadSettings) -> Self {
         Self {
-            relaxed: true,
-            ..Self::default()
+            settings,
+            info: Default::default(),
+            common: Default::default(),
+            pages: Default::default(),
+            chars: Default::default(),
+            char_count: Default::default(),
+            kernings: Default::default(),
+            kerning_count: Default::default(),
         }
     }
 
     pub fn build(mut self) -> crate::Result<Font> {
-        if !self.relaxed {
+        if !self.settings.ignore_counts {
             if let Some(specified) = self.char_count {
                 let realized = self.chars.len();
                 if specified as usize != realized {
@@ -49,9 +55,9 @@ impl FontBuilder {
         Ok(Font::new(info, common, self.pages, self.chars, self.kernings))
     }
 
-    pub fn set_info<'a, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn set_info<'b, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         if self.info.is_some() {
             Err(Error::DuplicateTag { line, tag: "info".to_owned() })
@@ -61,13 +67,13 @@ impl FontBuilder {
         }
     }
 
-    pub fn set_common<'a, A>(
+    pub fn set_common<'b, A>(
         &mut self,
         line: Option<usize>,
         attributes: &mut A,
     ) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         if self.common.is_some() {
             Err(Error::DuplicateTag { line, tag: "common".to_owned() })
@@ -77,9 +83,9 @@ impl FontBuilder {
         }
     }
 
-    pub fn page<'a, A>(&mut self, _line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn page<'b, A>(&mut self, _line: Option<usize>, attributes: &mut A) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         let Page { id, file } = Page::load(attributes)?;
         if id as usize == self.pages.len() {
@@ -90,17 +96,17 @@ impl FontBuilder {
         }
     }
 
-    pub fn char<'a, A>(&mut self, attributes: &mut A) -> crate::Result<()>
+    pub fn char<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         self.chars.push(Char::load(attributes)?);
         Ok(())
     }
 
-    pub fn chars<'a, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn chars<'b, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         if self.char_count.is_some() {
             Err(Error::DuplicateCharCount { line })
@@ -112,9 +118,9 @@ impl FontBuilder {
         }
     }
 
-    pub fn kernings<'a, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn kernings<'b, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         if self.kerning_count.is_some() {
             Err(Error::DuplicateKerningCount { line })
@@ -126,38 +132,23 @@ impl FontBuilder {
         }
     }
 
-    pub fn kerning<'a, A>(&mut self, attributes: &mut A) -> crate::Result<()>
+    pub fn kerning<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
     where
-        A: Attributes<'a>,
+        A: Attributes<'b>,
     {
         self.kernings.push(Kerning::load(attributes)?);
         Ok(())
     }
 }
 
-impl Default for FontBuilder {
-    fn default() -> Self {
-        Self {
-            relaxed: false,
-            info: Option::None,
-            common: Option::None,
-            pages: Vec::default(),
-            chars: Vec::default(),
-            char_count: None,
-            kernings: Vec::default(),
-            kerning_count: None,
-        }
-    }
-}
-
 pub trait Load: Sized {
-    fn load<'a, A: Attributes<'a>>(attributes: &mut A) -> crate::Result<Self>;
+    fn load<'b, A: Attributes<'b>>(attributes: &mut A) -> crate::Result<Self>;
 }
 
 macro_rules! implement_load {
     ($object:ty, $(($type:ty, $id:expr, $key:expr, $field:ident)),+) => {
         impl Load for $object {
-            fn load<'a, A: Attributes<'a>>(attributes: &mut A) -> crate::Result<Self> {
+            fn load<'b, A: Attributes<'b>>(attributes: &mut A) -> crate::Result<Self> {
                 let mut block = Self::default();
                 let mut bit_mask: u32 = 0x0000_0000;
                 while let Some(Attribute { key, value, line }) = attributes.next_attribute()? {
