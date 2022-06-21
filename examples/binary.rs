@@ -6,7 +6,7 @@ use std::result::Result;
 /// `cargo run --example bin`
 fn main() -> Result<(), Box<dyn Error>> {
     // Load some sample font data.
-    let bin = include_bytes!("../data/small.bin");
+    let bin = include_bytes!("../data/ok/small.bin");
 
     println!("Binary in:");
     bin.as_ref().chunks(0x10).for_each(|u| println!("{:02X?}", u));

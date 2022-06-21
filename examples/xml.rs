@@ -12,7 +12,7 @@ use bmfont_rs::Font;
 #[cfg(feature = "xml")]
 fn main() -> Result<(), Box<dyn Error>> {
     // Load some sample font data.
-    let xml = include_str!("../data/small.xml");
+    let xml = include_str!("../data/ok/small.xml");
     println!("XML in:");
     println!("{}\n", xml);
 

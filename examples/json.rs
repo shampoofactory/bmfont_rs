@@ -19,7 +19,7 @@ use bmfont_rs::Font;
 #[cfg(feature = "serde")]
 fn main() -> Result<(), Box<dyn Error>> {
     // Load some sample font data.
-    let text = include_str!("../data/small.txt");
+    let text = include_str!("../data/ok/small.txt");
     let font = bmfont_rs::text::from_str(text)?;
 
     // Export.

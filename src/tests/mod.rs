@@ -4,6 +4,7 @@ use crate::font::*;
 use crate::text;
 #[cfg(feature = "xml")]
 use crate::xml;
+use crate::LoadSettings;
 
 use std::error::Error;
 use std::result::Result;
@@ -71,14 +72,14 @@ fn small() -> Font {
 
 #[test]
 fn binary_small_from_bytes() -> Result<(), Box<dyn Error>> {
-    let src = include_bytes!("../../data/small.bin");
+    let src = include_bytes!("../../data/ok/small.bin");
     assert_eq!(binary::from_bytes(src)?, small());
     Ok(())
 }
 
 #[test]
 fn binary_small_from_reader() -> Result<(), Box<dyn Error>> {
-    let src = include_bytes!("../../data/small.bin");
+    let src = include_bytes!("../../data/ok/small.bin");
     assert_eq!(binary::from_reader(src.as_ref())?, small());
     Ok(())
 }
@@ -100,21 +101,21 @@ fn binary_small_to_writer() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn text_small_from_bytes() -> Result<(), Box<dyn Error>> {
-    let src = include_bytes!("../../data/small.txt");
+    let src = include_bytes!("../../data/ok/small.txt");
     assert_eq!(text::from_bytes(src)?, small());
     Ok(())
 }
 
 #[test]
 fn text_small_from_str() -> Result<(), Box<dyn Error>> {
-    let src = include_str!("../../data/small.txt");
+    let src = include_str!("../../data/ok/small.txt");
     assert_eq!(text::from_str(src)?, small());
     Ok(())
 }
 
 #[test]
 fn text_small_from_reader() -> Result<(), Box<dyn Error>> {
-    let src = include_bytes!("../../data/small.txt");
+    let src = include_bytes!("../../data/ok/small.txt");
     assert_eq!(text::from_reader(src.as_ref())?, small());
     Ok(())
 }
@@ -144,7 +145,7 @@ fn text_small_to_writer() -> Result<(), Box<dyn Error>> {
 #[cfg(feature = "xml")]
 #[test]
 fn xml_small_from_bytes() -> Result<(), Box<dyn Error>> {
-    let src = include_bytes!("../../data/small.xml");
+    let src = include_bytes!("../../data/ok/small.xml");
     assert_eq!(xml::from_bytes(src)?, small());
     Ok(())
 }
@@ -152,7 +153,7 @@ fn xml_small_from_bytes() -> Result<(), Box<dyn Error>> {
 #[cfg(feature = "xml")]
 #[test]
 fn xml_small_from_str() -> Result<(), Box<dyn Error>> {
-    let src = include_str!("../../data/small.xml");
+    let src = include_str!("../../data/ok/small.xml");
     assert_eq!(xml::from_str(src)?, small());
     Ok(())
 }
@@ -160,7 +161,7 @@ fn xml_small_from_str() -> Result<(), Box<dyn Error>> {
 #[cfg(feature = "xml")]
 #[test]
 fn xml_small_from_reader() -> Result<(), Box<dyn Error>> {
-    let src = include_bytes!("../../data/small.xml");
+    let src = include_bytes!("../../data/ok/small.xml");
     assert_eq!(xml::from_reader(src.as_ref())?, small());
     Ok(())
 }
@@ -192,9 +193,9 @@ fn xml_small_to_writer() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn text_binary_med_cmp() -> Result<(), Box<dyn Error>> {
-    let text_src = include_bytes!("../../data/small.txt");
+    let text_src = include_bytes!("../../data/ok/small.txt");
     let text_font = text::from_bytes(text_src)?;
-    let bin_src = include_bytes!("../../data/small.bin");
+    let bin_src = include_bytes!("../../data/ok/small.bin");
     let bin_font = binary::from_bytes(bin_src)?;
     assert_eq!(text_font, bin_font);
     Ok(())
@@ -203,9 +204,9 @@ fn text_binary_med_cmp() -> Result<(), Box<dyn Error>> {
 #[cfg(feature = "xml")]
 #[test]
 fn xml_binary_med_cmp() -> Result<(), Box<dyn Error>> {
-    let xml_src = include_bytes!("../../data/small.xml");
+    let xml_src = include_bytes!("../../data/ok/small.xml");
     let xml_font = xml::from_bytes(xml_src)?;
-    let bin_src = include_bytes!("../../data/small.bin");
+    let bin_src = include_bytes!("../../data/ok/small.bin");
     let bin_font = binary::from_bytes(bin_src)?;
     assert_eq!(xml_font, bin_font);
     Ok(())
@@ -214,9 +215,9 @@ fn xml_binary_med_cmp() -> Result<(), Box<dyn Error>> {
 #[cfg(feature = "xml")]
 #[test]
 fn xml_text_med_cmp() -> Result<(), Box<dyn Error>> {
-    let xml_src = include_bytes!("../../data/small.xml");
+    let xml_src = include_bytes!("../../data/ok/small.xml");
     let xml_font = xml::from_bytes(xml_src)?;
-    let text_src = include_bytes!("../../data/small.txt");
+    let text_src = include_bytes!("../../data/ok/small.txt");
     let text_font = text::from_bytes(text_src)?;
     assert_eq!(xml_font, text_font);
     Ok(())
@@ -250,6 +251,12 @@ err!(
     text_invalid_char_count,
     text::from_bytes(include_bytes!("../../data/bad/invalid_char_count.txt").as_ref()),
     crate::Error::InvalidCharCount { .. }
+);
+
+err!(
+    text_invalid_kerning_count,
+    text::from_bytes(include_bytes!("../../data/bad/invalid_kerning_count.txt").as_ref()),
+    crate::Error::InvalidKerningCount { .. }
 );
 
 err!(
@@ -293,3 +300,19 @@ err!(
     binary::from_bytes(include_bytes!("../../data/bad/unsupported.bin").as_ref()),
     crate::Error::UnsupportedBinaryVersion { version: 0xFF }
 );
+
+#[test]
+fn load_settings_ignore_char_count() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/bad/invalid_char_count.txt");
+    let settings = LoadSettings::default().ignore_counts();
+    assert_eq!(text::from_bytes_ext(src, &settings)?, small());
+    Ok(())
+}
+
+#[test]
+fn load_settings_ignore_kerning_count() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/bad/invalid_kerning_count.txt");
+    let settings = LoadSettings::default().ignore_counts();
+    assert_eq!(text::from_bytes_ext(src, &settings)?, small());
+    Ok(())
+}

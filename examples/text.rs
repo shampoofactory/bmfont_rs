@@ -6,7 +6,7 @@ use std::result::Result;
 /// `cargo run --example text`
 fn main() -> Result<(), Box<dyn Error>> {
     // Load some sample font data.
-    let src = include_str!("../data/small.txt");
+    let src = include_str!("../data/ok/small.txt");
 
     println!("Text in:");
     println!("{}", &src);
