@@ -224,7 +224,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Get output file from command line arguments.
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        panic!("missing image output file: png or jpg");
+        println!("missing image output filename: png or jpg");
+        println!("try: cargo run --example render lorem_ipsum.jpg");
+        return Ok(());
     }
     let file = &args[1];
 
