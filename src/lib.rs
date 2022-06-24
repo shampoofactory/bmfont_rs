@@ -3,18 +3,20 @@
 BMFont parsing library.
 
 Manipulate, import and export [BMFont](http://www.angelcode.com/products/bmfont/)
-files in text, binary, XML formats and more.
+files in text, binary, XML formats, and more.
 
 ## Overview
 
-This crate provides manipulation, import and export functions for BMFont descriptor files.
+This crate provides building, manipulation, import, and export functions for BMFont descriptor files.
 
 The core data object is the [Font](crate::Font).
-This object holds, in it's entirety, the information contained within a BMFont descriptor file.
-Font, when paired with the associated texture file/s, allows us to render the described bit-mapped
-text.
+This struct holds, in its entirety, the data contained within a BMFont descriptor file.
+When paired with the associated texture bitmap file/s, we have the information required to render the font in question.
 
-This crate contains no unsafe code and minimal dependencies.
+Due to the numerous graphics backends and usage requirements, this crate does not attempt to offer a universal rendering solution.
+
+This crate contains no unsafe code.
+Also, unless specified by compilation switches, it doesn't pull in any external dependencies.
 
 ## Basic usage
 
@@ -57,6 +59,33 @@ Example: export a BMFont text format file.
      Ok(())
  }
  ```
+
+## Advanced usage - broken files
+
+Unfortunately, there exist several BMFont tools that output broken files.
+Either they do not comply with the BMFont standard as written or contain other errors.
+When attempting to load these files, `bmfont_rs` will emit an error describing the problem.
+
+We may be able to work around or ignore some of these problems using the [LoadSettings](crate::LoadSettings) struct.
+Simply build the `LoadSettings` instance using the desired behavior switches and pass it into the `ext` form of the load function.
+
+If you encounter a BMFont file that appears to work with other tools, but not `bmfont_rs` then kindly open a ticket.
+It may be possible to add the correct behavior switch in future versions of `bmfont_rs`.
+
+Example: import a BMFont text file with incorrect character counts.
+```no_run
+use std::io;
+use std::io::prelude::*;
+use std::fs;
+
+fn main() -> bmfont_rs::Result<()> {
+    let src = fs::read_to_string("font.txt")?;
+    let settings = bmfont_rs::LoadSettings::default().ignore_counts();
+    let font = bmfont_rs::text::from_str_ext(&src, &settings)?;
+    println!("{:?}", font);
+    Ok(())
+}
+```
 
 ## Rendering fonts
 
@@ -106,9 +135,9 @@ All trademarks belong to their respective owners.
 Licensed under either of
 
  * Apache License, Version 2.0
-   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+   ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
  * MIT license
-   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+   ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 */
