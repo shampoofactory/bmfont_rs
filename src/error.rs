@@ -176,6 +176,10 @@ pub enum Error {
         /// IO error
         err: io::Error,
     },
+    PageCountMismatch {
+        common_pages: u16,
+        pages_len: usize,
+    },
 }
 
 impl fmt::Display for Error {
@@ -258,6 +262,13 @@ impl fmt::Display for Error {
             }
             Error::Io { err } => {
                 write!(f, "io: {}", err)
+            }
+            Error::PageCountMismatch { common_pages, pages_len } => {
+                write!(
+                    f,
+                    "page count mismatch: commons block specified: {common_pages}, \
+                pages block had: {pages_len}"
+                )
             }
         }
     }

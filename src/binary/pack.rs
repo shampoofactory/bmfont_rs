@@ -61,7 +61,7 @@ pub trait UnpackDyn<T = ()>: PackDynLen<T> + Sized {
     #[inline(always)]
     fn unpack_dyn_take(src: &mut &[u8]) -> crate::Result<Self> {
         let (obj, obj_len) = Self::unpack_dyn(src)?;
-        if obj_len == src.len() {
+        if obj_len <= src.len() {
             *src = &src[obj_len..];
             Ok(obj)
         } else {

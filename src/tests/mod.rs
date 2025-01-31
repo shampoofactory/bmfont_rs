@@ -100,6 +100,14 @@ fn binary_small_to_writer() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn binary_multi_page() -> Result<(), Box<dyn Error>> {
+    let multi_page = include_bytes!("../../data/ok/multi-page.bin");
+    let font = binary::from_bytes(multi_page)?;
+    assert_eq!(font.pages.len(), font.common.pages.into());
+    Ok(())
+}
+
+#[test]
 fn text_small_from_bytes() -> Result<(), Box<dyn Error>> {
     let src = include_bytes!("../../data/ok/small.txt");
     assert_eq!(text::from_bytes(src)?, small());
