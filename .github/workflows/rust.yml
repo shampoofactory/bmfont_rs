@@ -19,7 +19,6 @@ jobs:
         - arm
         - ubuntu
         - ubuntu-32
-        - mips
         - macos
         - win-msvc
         - win-gnu
@@ -35,10 +34,6 @@ jobs:
           os: ubuntu-latest
           rust: stable
           target: i686-unknown-linux-gnu
-        - build: mips
-          os: ubuntu-latest
-          rust: stable
-          target: mips64-unknown-linux-gnuabi64
         - build: macos
           os: macos-latest
           rust: stable
