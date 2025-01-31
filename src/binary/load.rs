@@ -114,7 +114,15 @@ impl<'a> FontBuilderBinary<'a> {
     fn build(mut self) -> crate::Result<Font> {
         let info = self.info.take().ok_or(crate::Error::NoInfoBlock)?;
         let common = self.common.take().ok_or(crate::Error::NoCommonBlock)?;
-        Ok(Font::new(info, common, self.pages, self.chars, self.kernings))
+        let pages = self.pages;
+        if pages.len() != common.pages.into() {
+            return Err(crate::Error::PageCountMismatch {
+                pages_len: pages.len(),
+                common_pages: common.pages,
+            });
+        }
+
+        Ok(Font::new(info, common, pages, self.chars, self.kernings))
     }
 
     fn load(&mut self) -> crate::Result<()> {
