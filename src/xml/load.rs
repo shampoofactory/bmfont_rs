@@ -160,37 +160,37 @@ impl<'a> FontBuilderXml<'a> {
 
     fn info(&mut self, node: &xml::Node) -> crate::Result<()> {
         debug_assert!(node.node_type() == xml::NodeType::Element);
-        self.builder.set_info(None, &mut node.attributes())
+        self.builder.set_info_attributes(None, &mut node.attributes())
     }
 
     fn common(&mut self, node: &xml::Node) -> crate::Result<()> {
         debug_assert!(node.node_type() == xml::NodeType::Element);
-        self.builder.set_common(None, &mut node.attributes())
+        self.builder.set_common_attributes(None, &mut node.attributes())
     }
 
     fn pages(&mut self, node: &xml::Node) -> crate::Result<()> {
         debug_assert!(node.node_type() == xml::NodeType::Element);
         child_elements(node, |node| {
             check_tag_name(node, "page")?;
-            self.builder.page(None, &mut node.attributes())
+            self.builder.add_page_attributes(&mut node.attributes())
         })
     }
 
     fn chars(&mut self, node: &xml::Node) -> crate::Result<()> {
         debug_assert!(node.node_type() == xml::NodeType::Element);
-        self.builder.chars(None, &mut node.attributes())?;
+        self.builder.set_char_count_attributes(None, &mut node.attributes())?;
         child_elements(node, |node| {
             check_tag_name(node, "char")?;
-            self.builder.char(&mut node.attributes())
+            self.builder.add_char_attributes(&mut node.attributes())
         })
     }
 
     fn kernings(&mut self, node: &xml::Node) -> crate::Result<()> {
         debug_assert!(node.node_type() == xml::NodeType::Element);
-        self.builder.kernings(None, &mut node.attributes())?;
+        self.builder.set_kerning_count_attributes(None, &mut node.attributes())?;
         child_elements(node, |node| {
             check_tag_name(node, "kerning")?;
-            self.builder.kerning(&mut node.attributes())
+            self.builder.add_kerning_attributes(&mut node.attributes())
         })
     }
 }

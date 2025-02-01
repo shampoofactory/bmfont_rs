@@ -36,6 +36,8 @@ impl<'a> FontBuilder<'a> {
     }
 
     pub fn build(mut self) -> crate::Result<Font> {
+        let info = self.info.take().ok_or(Error::NoInfoBlock)?;
+        let common = self.common.take().ok_or(Error::NoCommonBlock)?;
         if !self.settings.ignore_counts {
             if let Some(specified) = self.char_count {
                 let realized = self.chars.len();
@@ -49,25 +51,18 @@ impl<'a> FontBuilder<'a> {
                     return Err(Error::InvalidKerningCount { specified, realized });
                 }
             }
+            {
+                let specified = common.pages;
+                let realized = self.pages.len();
+                if specified as usize != realized {
+                    return Err(Error::InvalidPageCount { specified, realized });
+                }
+            }
         }
-        let info = self.info.take().ok_or(Error::NoInfoBlock)?;
-        let common = self.common.take().ok_or(Error::NoCommonBlock)?;
         Ok(Font::new(info, common, self.pages, self.chars, self.kernings))
     }
 
-    pub fn set_info<'b, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
-    where
-        A: Attributes<'b>,
-    {
-        if self.info.is_some() {
-            Err(Error::DuplicateTag { line, tag: "info".to_owned() })
-        } else {
-            self.info = Some(Info::load(attributes)?);
-            Ok(())
-        }
-    }
-
-    pub fn set_common<'b, A>(
+    pub fn set_info_attributes<'b, A>(
         &mut self,
         line: Option<usize>,
         attributes: &mut A,
@@ -75,19 +70,47 @@ impl<'a> FontBuilder<'a> {
     where
         A: Attributes<'b>,
     {
-        if self.common.is_some() {
-            Err(Error::DuplicateTag { line, tag: "common".to_owned() })
+        self.set_info(line, Info::load(attributes)?)
+    }
+
+    pub fn set_info(&mut self, line: Option<usize>, info: Info) -> crate::Result<()> {
+        if self.info.is_some() {
+            Err(crate::Error::DuplicateInfoBlock { line })
         } else {
-            self.common = Some(Common::load(attributes)?);
+            self.info = Some(info);
             Ok(())
         }
     }
 
-    pub fn page<'b, A>(&mut self, _line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn set_common_attributes<'b, A>(
+        &mut self,
+        line: Option<usize>,
+        attributes: &mut A,
+    ) -> crate::Result<()>
     where
         A: Attributes<'b>,
     {
-        let Page { id, file } = Page::load(attributes)?;
+        self.set_common(line, Common::load(attributes)?)
+    }
+
+    pub fn set_common(&mut self, line: Option<usize>, common: Common) -> crate::Result<()> {
+        if self.common.is_some() {
+            Err(crate::Error::DuplicateCommonBlock { line })
+        } else {
+            self.common = Some(common);
+            Ok(())
+        }
+    }
+
+    pub fn add_page_attributes<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
+    where
+        A: Attributes<'b>,
+    {
+        self.add_page(Page::load(attributes)?)
+    }
+
+    pub fn add_page(&mut self, page: Page) -> crate::Result<()> {
+        let Page { id, file } = page;
         if id as usize == self.pages.len() {
             self.pages.push(file);
             Ok(())
@@ -96,47 +119,77 @@ impl<'a> FontBuilder<'a> {
         }
     }
 
-    pub fn char<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
+    pub fn add_char_attributes<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
     where
         A: Attributes<'b>,
     {
-        self.chars.push(Char::load(attributes)?);
+        self.add_char(Char::load(attributes)?)
+    }
+
+    pub fn add_char(&mut self, char: Char) -> crate::Result<()> {
+        self.chars.push(char);
         Ok(())
     }
 
-    pub fn chars<'b, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn set_char_count_attributes<'b, A>(
+        &mut self,
+        line: Option<usize>,
+        attributes: &mut A,
+    ) -> crate::Result<()>
     where
         A: Attributes<'b>,
     {
+        Count::load(attributes).and_then(|Count { count }| self.set_char_count(line, count))
+    }
+
+    pub fn set_char_count(&mut self, line: Option<usize>, char_count: u32) -> crate::Result<()> {
         if self.char_count.is_some() {
             Err(Error::DuplicateCharCount { line })
         } else {
-            Count::load(attributes).map(|Count { count }| {
-                self.char_count = Some(count);
-                self.chars.reserve(count as usize - self.chars.len())
-            })
+            self.char_count = Some(char_count);
+            if self.chars.len() < char_count as usize {
+                self.chars.reserve(char_count as usize - self.chars.len())
+            }
+            Ok(())
         }
     }
 
-    pub fn kernings<'b, A>(&mut self, line: Option<usize>, attributes: &mut A) -> crate::Result<()>
+    pub fn set_kerning_count_attributes<'b, A>(
+        &mut self,
+        line: Option<usize>,
+        attributes: &mut A,
+    ) -> crate::Result<()>
     where
         A: Attributes<'b>,
     {
+        Count::load(attributes).and_then(|Count { count }| self.set_kerning_count(line, count))
+    }
+
+    pub fn set_kerning_count(
+        &mut self,
+        line: Option<usize>,
+        kerning_count: u32,
+    ) -> crate::Result<()> {
         if self.kerning_count.is_some() {
             Err(Error::DuplicateKerningCount { line })
         } else {
-            Count::load(attributes).map(|Count { count }| {
-                self.kerning_count = Some(count);
-                self.kernings.reserve(count as usize - self.kernings.len())
-            })
+            self.kerning_count = Some(kerning_count);
+            if self.kernings.len() < kerning_count as usize {
+                self.kernings.reserve(kerning_count as usize - self.kernings.len())
+            }
+            Ok(())
         }
     }
 
-    pub fn kerning<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
+    pub fn add_kerning_attributes<'b, A>(&mut self, attributes: &mut A) -> crate::Result<()>
     where
         A: Attributes<'b>,
     {
-        self.kernings.push(Kerning::load(attributes)?);
+        self.add_kerning(Kerning::load(attributes)?)
+    }
+
+    pub fn add_kerning(&mut self, kerning: Kerning) -> crate::Result<()> {
+        self.kernings.push(kerning);
         Ok(())
     }
 }

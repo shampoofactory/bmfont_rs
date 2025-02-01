@@ -124,13 +124,13 @@ impl<'a> FontBuilderText<'a> {
         let mut attributes = TaggedAttributes::from_bytes(bytes);
         while let Some(Tag { tag, line }) = attributes.next_tag()? {
             match tag {
-                b"info" => self.builder.set_info(line, &mut attributes),
-                b"common" => self.builder.set_common(line, &mut attributes),
-                b"page" => self.builder.page(line, &mut attributes),
-                b"chars" => self.builder.chars(line, &mut attributes),
-                b"char" => self.builder.char(&mut attributes),
-                b"kernings" => self.builder.kernings(line, &mut attributes),
-                b"kerning" => self.builder.kerning(&mut attributes),
+                b"info" => self.builder.set_info_attributes(line, &mut attributes),
+                b"common" => self.builder.set_common_attributes(line, &mut attributes),
+                b"page" => self.builder.add_page_attributes(&mut attributes),
+                b"chars" => self.builder.set_char_count_attributes(line, &mut attributes),
+                b"char" => self.builder.add_char_attributes(&mut attributes),
+                b"kernings" => self.builder.set_kerning_count_attributes(line, &mut attributes),
+                b"kerning" => self.builder.add_kerning_attributes(&mut attributes),
                 tag => {
                     let line = Some(attributes.line());
                     let tag = String::from_utf8(tag.into()).map_err(|e| crate::Error::Parse {
