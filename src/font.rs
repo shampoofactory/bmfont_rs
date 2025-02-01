@@ -27,8 +27,7 @@ use super::charset::Charset;
 /// - `chars`: holds an unordered list of character descriptions.
 /// - `kernings` holds an unordered list of kerning pairs.
 ///
-/// For efficient usage you'll likely want to convert `chars` and `kernings` to maps for efficient
-/// usage.
+/// For efficient usage you'll likely want to convert `chars` and `kernings` to maps.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Font {
