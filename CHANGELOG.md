@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 Bugfixes: 
 - 'unpack_dyn_take' now correctly works with multiple items.
 - 'validate_kerning_references' error message now outputs the correct second kerning.
+- 'tagged_attributes' mutate test now loops correctly.
 
 Internal improvements:
 - simplify internal builder mechanics.
