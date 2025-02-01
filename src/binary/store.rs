@@ -113,6 +113,7 @@ impl<'a> StoreAssist<'a> {
         Ok(())
     }
 
+    #[allow(clippy::manual_range_patterns)]
     fn pages(&mut self) -> crate::Result<()> {
         self.block(PAGES, self.dyn_len.pages as u32)?;
         match self.version {
@@ -134,6 +135,7 @@ impl<'a> StoreAssist<'a> {
         Ok(())
     }
 
+    #[allow(clippy::manual_range_patterns)]
     fn chars(&mut self) -> crate::Result<()> {
         self.block(CHARS, self.dyn_len.chars as u32)?;
         match self.version {
@@ -147,6 +149,7 @@ impl<'a> StoreAssist<'a> {
         Ok(())
     }
 
+    #[allow(clippy::manual_range_patterns)]
     fn kerning_pairs(&mut self) -> crate::Result<()> {
         self.block(KERNING_PAIRS, self.dyn_len.kernings as u32)?;
         match self.version {
