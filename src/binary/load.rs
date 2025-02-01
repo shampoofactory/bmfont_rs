@@ -137,6 +137,7 @@ impl<'a> FontBuilderBinary<'a> {
         self.builder.set_common(None, common)
     }
 
+    #[allow(clippy::manual_range_patterns)]
     fn set_pages(&mut self, src: &[u8]) -> crate::Result<()> {
         match self.version {
             1 | 2 | 3 => {
@@ -152,6 +153,7 @@ impl<'a> FontBuilderBinary<'a> {
         Ok(())
     }
 
+    #[allow(clippy::manual_range_patterns)]
     fn set_chars(&mut self, src: &[u8]) -> crate::Result<()> {
         match self.version {
             1 | 2 | 3 => {
@@ -162,6 +164,7 @@ impl<'a> FontBuilderBinary<'a> {
         Ok(())
     }
 
+    #[allow(clippy::manual_range_patterns)]
     fn set_kerning_pairs(&mut self, src: &[u8]) -> crate::Result<()> {
         match self.version {
             1 | 2 | 3 => {
@@ -174,6 +177,7 @@ impl<'a> FontBuilderBinary<'a> {
         Ok(())
     }
 
+    #[allow(clippy::manual_range_patterns)]
     #[inline(always)]
     fn block(&mut self) -> crate::Result<(u8, &'a [u8])> {
         let Block { id, len } = match self.version {
