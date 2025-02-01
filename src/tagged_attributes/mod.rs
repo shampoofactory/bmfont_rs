@@ -468,16 +468,8 @@ mod tests {
             for m in 0..=255 {
                 bytes[i] = m;
                 let mut tkv = TaggedAttributes::from_bytes(&bytes);
-                'out: loop {
-                    match tkv.tag() {
-                        Ok(Some(_)) => loop {
-                            match tkv.key_value() {
-                                Ok(Some(_)) => continue,
-                                Ok(None) | Err(_) => break 'out,
-                            }
-                        },
-                        Ok(None) | Err(_) => break 'out,
-                    }
+                while let Ok(Some(_)) = tkv.tag() {
+                    while let Ok(Some(_)) = tkv.key_value() {}
                 }
             }
             bytes[i] = b;
