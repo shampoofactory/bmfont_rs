@@ -2,7 +2,6 @@ use std::error::Error;
 use std::result::Result;
 
 #[cfg(feature = "xml")]
-use bmfont_rs::Font;
 
 /// XML Serde import/ export.
 ///
