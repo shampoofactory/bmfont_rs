@@ -86,7 +86,7 @@ impl Font {
                 return Err(crate::Error::InvalidKerningChar { id: kerning.first });
             }
             if !set.contains(&kerning.second) {
-                return Err(crate::Error::InvalidKerningChar { id: kerning.first });
+                return Err(crate::Error::InvalidKerningChar { id: kerning.second });
             }
         }
         Ok(())
