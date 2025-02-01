@@ -116,9 +116,9 @@ impl<'a> FontBuilderBinary<'a> {
         let common = self.common.take().ok_or(crate::Error::NoCommonBlock)?;
         let pages = self.pages;
         if pages.len() != common.pages.into() {
-            return Err(crate::Error::PageCountMismatch {
-                pages_len: pages.len(),
-                common_pages: common.pages,
+            return Err(crate::Error::InvalidPageCount {
+                realized: pages.len(),
+                specified: common.pages,
             });
         }
 

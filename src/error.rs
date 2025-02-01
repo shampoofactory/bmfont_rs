@@ -106,7 +106,7 @@ pub enum Error {
         /// Character set encoding.
         charset: Charset,
     },
-    /// The specified character count does not match the number of specified characters
+    /// The specified character count does not match the number of realized characters
     /// (decode only).
     InvalidCharCount {
         /// Specified count.
@@ -121,7 +121,7 @@ pub enum Error {
         /// Page id.
         page_id: u32,
     },
-    /// The specified kerning pair count does not match the number of specified kerning pairs
+    /// The specified kerning pair count does not match the number of realized kerning pairs
     /// (decode only).
     InvalidKerningCount {
         /// Specified count.
@@ -140,6 +140,14 @@ pub enum Error {
         line: Option<usize>,
         /// Invalid key.
         key: String,
+    },
+    /// The specified page count does not match the number of realized pages
+    /// (decode only).
+    InvalidPageCount {
+        /// Specified count.
+        specified: u16,
+        /// Realized count.
+        realized: usize,
     },
     /// The tag name is not valid (decode only).
     InvalidTag {
@@ -175,10 +183,6 @@ pub enum Error {
     Io {
         /// IO error
         err: io::Error,
-    },
-    PageCountMismatch {
-        common_pages: u16,
-        pages_len: usize,
     },
 }
 
@@ -242,6 +246,9 @@ impl fmt::Display for Error {
             Error::InvalidKey { line, key } => {
                 write!(f, "{}invalid key: '{}'", format_line(line), key)
             }
+            Error::InvalidPageCount { specified, realized } => {
+                write!(f, "invalid page count: specified: {}, realized: {}", specified, realized)
+            }
             Error::InvalidTag { line, tag } => {
                 write!(f, "{}invalid tag: '{}'", format_line(line), tag)
             }
@@ -262,13 +269,6 @@ impl fmt::Display for Error {
             }
             Error::Io { err } => {
                 write!(f, "io: {}", err)
-            }
-            Error::PageCountMismatch { common_pages, pages_len } => {
-                write!(
-                    f,
-                    "page count mismatch: commons block specified: {common_pages}, \
-                pages block had: {pages_len}"
-                )
             }
         }
     }
