@@ -70,7 +70,7 @@ macro_rules! unpack {
     ($src:expr, $($u:ty),*) => {{
     // Tuple sub-expression evaluation order is defined.
     // https://doc.rust-lang.org/reference/expressions.html?highlight=subexpression#evaluation-order-of-operands
-    #[allow(clippy::eval_order_dependence)]
+    #[allow(clippy::mixed_read_write_in_expression)]
     #[allow(unused_assignments)]
     {
         use std::mem::size_of;
