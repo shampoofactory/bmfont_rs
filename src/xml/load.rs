@@ -6,7 +6,6 @@ use crate::font::Font;
 use crate::LoadSettings;
 
 use std::io;
-use std::mem;
 
 /// Load XML format font.
 ///
@@ -195,17 +194,13 @@ impl<'a> FontBuilderXml<'a> {
     }
 }
 
-impl<'a, 'b: 'a> Attributes<'a> for &'b [xml::Attribute<'a>] {
+impl<'a, 'input: 'a> Attributes<'a> for xml::Attributes<'a, 'input> {
     fn next_attribute(&mut self) -> crate::Result<Option<Attribute<'a>>> {
-        if self.is_empty() {
-            return Ok(None);
-        }
-        let (head, tail) = mem::take(self).split_at(1);
-        *self = tail;
-        let head = &head[0];
-        let key = head.name().as_bytes();
-        let value = head.value().as_bytes();
-        Ok(Some(Attribute::new(key, value, None)))
+        Ok(self.next().map(|u| {
+            let key = u.name().as_bytes();
+            let value = u.value().as_bytes();
+            Attribute::new(key, value, None)
+        }))
     }
 }
 
@@ -236,15 +231,16 @@ fn check_tag_name(node: &xml::Node, tag_name: &str) -> crate::Result<()> {
 }
 
 fn check_null_attributes(node: &xml::Node) -> crate::Result<()> {
-    if node.attributes().is_empty() {
-        Ok(())
-    } else {
-        let tag_name = node.tag_name().name();
-        Err(crate::Error::Parse {
-            line: None,
-            entity: "xml".to_owned(),
-            err: format!("{}: unexpected attributes", tag_name),
-        })
+    match node.attributes().len() {
+        0 => Ok(()),
+        _ => {
+            let tag_name = node.tag_name().name();
+            Err(crate::Error::Parse {
+                line: None,
+                entity: "xml".to_owned(),
+                err: format!("{}: unexpected attributes", tag_name),
+            })
+        }
     }
 }
 
