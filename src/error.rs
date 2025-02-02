@@ -29,34 +29,34 @@ pub enum Error {
     BrokenPageList,
     /// Duplicate character count (decode only).
     DuplicateCharCount {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
     },
     /// Duplicate character id.
     DuplicateChar {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Duplicate char id.
         id: u32,
     },
     /// Duplicate common block (decode only).
     DuplicateCommonBlock {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
     },
     /// Duplicate info block (decode only).
     DuplicateInfoBlock {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
     },
     /// Duplicate kerning count (decode only).
     DuplicateKerningCount {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
     },
     /// Duplicate kerning pair entry.
     DuplicateKerningPair {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Kerning first character id.
         first: u32,
@@ -65,28 +65,28 @@ pub enum Error {
     },
     /// Duplicate tagged key value (decode only).
     DuplicateKey {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Duplicate key.
         key: String,
     },
     /// Duplicate page id (decode only).
     DuplicatePageId {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Duplicate page id.
         id: u32,
     },
     /// Duplicate tag (decode only).
     DuplicateTag {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Duplicate tag.
         tag: String,
     },
     /// Page name lengths are not all of the same size.
     IncongruentPageNameLen {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
     },
     /// The input is not a valid BMFont binary file (decode only).
@@ -136,7 +136,7 @@ pub enum Error {
     },
     /// The tagged key name is not valid (decode only).
     InvalidKey {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Invalid key.
         key: String,
@@ -151,14 +151,14 @@ pub enum Error {
     },
     /// The string contains invalid characters (encode only).
     InvalidString {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Invalid string.
         string: String,
     },
     /// The tag name is not valid (decode only).
     InvalidTag {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// Invalid tag.
         tag: String,
@@ -169,7 +169,7 @@ pub enum Error {
     NoInfoBlock,
     /// There was an error parsing an entity.
     Parse {
-        /// Line where the error occured.
+        /// Line where the error occurred.
         line: Option<usize>,
         /// The entity that failed to parse.
         entity: String,
