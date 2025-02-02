@@ -2,6 +2,9 @@ use crate::font::{Char, Common, Font, Info, Kerning};
 
 use std::io;
 
+/// Initial XML string escaper capacity.
+const ESCAPER_CAPACITY: usize = 256;
+
 /// Store XML format font.
 ///
 /// Store a font into a [String] in XML format.
@@ -77,30 +80,30 @@ pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> io::Result<()> {
-    font.store(&mut writer)
+    let mut escaper = Escaper::with_capacity(ESCAPER_CAPACITY);
+    font.store(&mut writer, &mut escaper)
 }
 
 trait StoreXml {
-    fn store<W: io::Write>(&self, writer: W) -> io::Result<()>;
+    fn store<W: io::Write>(&self, writer: W, escaper: &mut Escaper) -> io::Result<()>;
 }
 
 impl StoreXml for Font {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, escaper: &mut Escaper) -> io::Result<()> {
         writeln!(writer, "<?xml version=\"1.0\"?>")?;
         writeln!(writer, "<font>")?;
-        self.info.store(&mut writer)?;
-        self.common.store(&mut writer)?;
+        self.info.store(&mut writer, escaper)?;
+        self.common.store(&mut writer, escaper)?;
         writeln!(writer, "  <pages>")?;
-        self.pages
-            .iter()
-            .enumerate()
-            .try_for_each(|(i, s)| write!(writer, "    <page id=\"{}\" file=\"{}\" />", i, s))?;
+        self.pages.iter().enumerate().try_for_each(|(i, s)| {
+            write!(writer, "    <page id=\"{}\" file=\"{}\" />", i, escaper.escape_str(s)?)
+        })?;
         writeln!(writer, "  </pages>")?;
         writeln!(writer, "  <chars count=\"{}\">", self.chars.len())?;
-        self.chars.iter().try_for_each(|u| u.store(&mut writer))?;
+        self.chars.iter().try_for_each(|u| u.store(&mut writer, escaper))?;
         writeln!(writer, "  </chars>")?;
         writeln!(writer, "  <kernings count=\"{}\">", self.kernings.len())?;
-        self.kernings.iter().try_for_each(|u| u.store(&mut writer))?;
+        self.kernings.iter().try_for_each(|u| u.store(&mut writer, escaper))?;
         writeln!(writer, "  </kernings>")?;
         writeln!(writer, "</font>")?;
         Ok(())
@@ -108,7 +111,7 @@ impl StoreXml for Font {
 }
 
 impl StoreXml for Char {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> io::Result<()> {
         writeln!(
             writer,
             "    <char \
@@ -138,7 +141,7 @@ impl StoreXml for Char {
 }
 
 impl StoreXml for Common {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> io::Result<()> {
         writeln!(
             writer,
             "  <common \
@@ -168,7 +171,7 @@ impl StoreXml for Common {
 }
 
 impl StoreXml for Info {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, escaper: &mut Escaper) -> io::Result<()> {
         writeln!(
             writer,
             "  <info \
@@ -185,7 +188,7 @@ impl StoreXml for Info {
                    spacing=\"{},{}\" \
                    outline=\"{}\" \
                />",
-            self.face,
+            escaper.escape_str(&self.face)?,
             self.size,
             self.bold as u32,
             self.italic as u32,
@@ -206,11 +209,81 @@ impl StoreXml for Info {
 }
 
 impl StoreXml for Kerning {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> io::Result<()> {
         writeln!(
             writer,
             "    <kerning first=\"{}\" second=\"{}\" amount=\"{}\" />",
             self.first, self.second, self.amount
         )
     }
+}
+
+#[derive(Debug, Default)]
+struct Escaper {
+    builder: String,
+}
+
+impl Escaper {
+    fn with_capacity(capacity: usize) -> Self {
+        Self { builder: String::with_capacity(capacity) }
+    }
+
+    fn escape_str<'a>(&'a mut self, str: &str) -> crate::Result<&'a str> {
+        self.builder.clear();
+        for c in str.chars() {
+            match c {
+                '"' => self.builder.push_str("&quot;"),
+                '\'' => self.builder.push_str("&apos;"),
+                '<' => self.builder.push_str("&lt;"),
+                '>' => self.builder.push_str("&gt;"),
+                '&' => self.builder.push_str("&amp;"),
+                '\x00'..='\x1F' | '\x7F' => {
+                    return Err(crate::Error::InvalidString { line: None, string: str.to_owned() })
+                }
+                _ => self.builder.push(c),
+            }
+        }
+        Ok(&self.builder)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! escape_ok {
+        ($name:ident, $str:expr, $string:expr) => {
+            #[test]
+            fn $name() -> crate::Result<()> {
+                let mut escaper = Escaper::default();
+                let escaped = escaper.escape_str($str)?;
+                assert_eq!(escaped, $string);
+                Ok(())
+            }
+        };
+    }
+
+    escape_ok!(escape_ok_quot, "\"", "&quot;");
+    escape_ok!(escape_ok_apos, "'", "&apos;");
+    escape_ok!(escape_ok_lt, "<", "&lt;");
+    escape_ok!(escape_ok_gt, ">", "&gt;");
+    escape_ok!(escape_ok_amp, "&", "&amp;");
+    escape_ok!(escape_ok_space, " ", " ");
+    escape_ok!(escape_ok_multi, "head\"'<>&tail", "head&quot;&apos;&lt;&gt;&amp;tail");
+    escape_ok!(escape_ok_multi_space, "\" ' < > &", "&quot; &apos; &lt; &gt; &amp;");
+    escape_ok!(escape_ok_unicode_face, "☺", "☺");
+
+    macro_rules! escape_err {
+        ($name:ident, $str:expr) => {
+            #[test]
+            fn $name() -> crate::Result<()> {
+                assert!(Escaper::default().escape_str($str).is_err());
+                Ok(())
+            }
+        };
+    }
+
+    escape_err!(escape_err_nul, "\x00");
+    escape_err!(escape_err_us, "\x1F");
+    escape_err!(escape_err_del, "\x7F");
 }

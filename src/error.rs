@@ -149,6 +149,13 @@ pub enum Error {
         /// Realized count.
         realized: usize,
     },
+    /// The string contains invalid characters (encode only).
+    InvalidString {
+        /// Line where the error occured.
+        line: Option<usize>,
+        /// Invalid string.
+        string: String,
+    },
     /// The tag name is not valid (decode only).
     InvalidTag {
         /// Line where the error occured.
@@ -248,6 +255,9 @@ impl fmt::Display for Error {
             }
             Error::InvalidPageCount { specified, realized } => {
                 write!(f, "invalid page count: specified: {}, realized: {}", specified, realized)
+            }
+            Error::InvalidString { line, string } => {
+                write!(f, "{}invalid string: '{}'", format_line(line), string)
             }
             Error::InvalidTag { line, tag } => {
                 write!(f, "{}invalid tag: '{}'", format_line(line), tag)

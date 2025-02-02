@@ -199,6 +199,38 @@ fn xml_small_to_writer() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[cfg(feature = "xml")]
+#[test]
+fn xml_small_string_escape() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    let mut small = small();
+    small.info.face = "<\"&'☺'&\">".to_owned();
+    small.pages[0] = "<\"&'☺'&\">.png".to_owned();
+    xml::to_writer(&mut vec, &small)?;
+    assert_eq!(xml::from_bytes(&vec)?, small);
+    Ok(())
+}
+
+#[cfg(feature = "xml")]
+#[test]
+fn xml_small_invalid_face_string() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    let mut small = small();
+    small.info.face = "\x00".to_owned();
+    assert!(xml::to_writer(&mut vec, &small).is_err());
+    Ok(())
+}
+
+#[cfg(feature = "xml")]
+#[test]
+fn xml_small_invalid_page_string() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    let mut small = small();
+    small.pages[0] = "\x00".to_owned();
+    assert!(xml::to_writer(&mut vec, &small).is_err());
+    Ok(())
+}
+
 #[test]
 fn text_binary_med_cmp() -> Result<(), Box<dyn Error>> {
     let text_src = include_bytes!("../../data/ok/small.txt");
