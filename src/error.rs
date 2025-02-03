@@ -21,7 +21,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 ///
 /// The [Error::Internal] variant indicates malfunctioning library code and should be
 /// reported at the project repository home
-/// [here](https://github.com/shampoofactory/lzfse_rust/issues).
+/// [here](https://github.com/shampoofactory/bmfont_rs/issues).
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
