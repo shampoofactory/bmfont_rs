@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 
 API:
 - xml/ text store methods now check for invalid string value encoding
+- load methods now check for potentially unsafe value strings
 
 Bugfixes:
 - xml store methods now properly escape the following string characters: `\ ' < > &`
