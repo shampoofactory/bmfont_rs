@@ -169,6 +169,13 @@ pub enum Error {
         /// The parse error.
         err: String,
     },
+    /// The value string contains potentially unsafe control characters.
+    UnsafeValueString {
+        /// Path/ location.
+        path: String,
+        /// Value.
+        value: String,
+    },
     /// The binary version is unsupported (decode only).
     UnsupportedBinaryVersion {
         /// Binary version.
@@ -268,11 +275,14 @@ impl fmt::Display for Error {
             Error::Parse { line, entity, err } => {
                 write!(f, "{}parse error: {}: {}", format_line(line), entity, err)
             }
+            Error::UnsafeValueString { path, value } => {
+                write!(f, "{}: unsafe value string: '{}'", path, value)
+            }
             Error::UnsupportedBinaryVersion { version } => {
                 write!(f, "unsupported version: {}", version)
             }
             Error::UnsupportedValueEncoding { path, value } => {
-                write!(f, "{}, unsupported value encoding: '{}'", path, value)
+                write!(f, "{}: unsupported value encoding: '{}'", path, value)
             }
             Error::Internal { err } => {
                 write!(f, "internal error: {}", err)

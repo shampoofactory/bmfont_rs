@@ -340,6 +340,18 @@ err!(
 );
 
 err!(
+    invalid_face_string,
+    binary::from_bytes(include_bytes!("../../data/bad/invalid_face_string.bin").as_ref()),
+    crate::Error::UnsafeValueString { .. }
+);
+
+err!(
+    invalid_page_string,
+    binary::from_bytes(include_bytes!("../../data/bad/invalid_page_string.bin").as_ref()),
+    crate::Error::UnsafeValueString { .. }
+);
+
+err!(
     bin_underflow,
     binary::from_bytes(include_bytes!("../../data/bad/underflow.bin").as_ref()),
     crate::Error::Parse { .. }

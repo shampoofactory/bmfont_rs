@@ -59,6 +59,12 @@ impl<'a> FontBuilder<'a> {
                 }
             }
         }
+        if !self.settings.allow_string_control_characters {
+            for page in &self.pages {
+                check_string("page id", page)?;
+            }
+            check_string("info face", &info.face)?;
+        }
         Ok(Font::new(info, common, self.pages, self.chars, self.kernings))
     }
 
@@ -299,4 +305,55 @@ implement_load!(Page, (u16, 0x0, b"id", id), (String, 0x1, b"file", file));
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Count {
     count: u32,
+}
+
+fn check_string<'a>(path: &'a str, value: &'a str) -> crate::Result<&'a str> {
+    for c in value.chars() {
+        match c {
+            '\x00'..='\x1F' | '\x7F' => {
+                return Err(crate::Error::UnsafeValueString {
+                    path: path.to_owned(),
+                    value: value.to_owned(),
+                })
+            }
+            _ => {}
+        }
+    }
+    Ok(value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! check_ok {
+        ($name:ident, $str:expr) => {
+            #[test]
+            fn $name() -> crate::Result<()> {
+                assert!(check_string("test", $str).is_ok());
+                Ok(())
+            }
+        };
+    }
+
+    check_ok!(check_ok_null, "");
+    check_ok!(check_ok_space, " ");
+    check_ok!(check_ok_tilde, "~");
+    check_ok!(check_ok_unicode_face, "☺");
+
+    macro_rules! check_err {
+        ($name:ident, $str:expr) => {
+            #[test]
+            fn $name() -> crate::Result<()> {
+                assert!(check_string("test", $str).is_err());
+                Ok(())
+            }
+        };
+    }
+
+    check_err!(check_err_nul, "\x00");
+    check_err!(check_err_us, "\x1F");
+    check_err!(check_err_del, "\x7F");
+    check_err!(check_err_nl, "\n");
+    check_err!(check_err_cr, "\r");
 }

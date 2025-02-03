@@ -21,6 +21,8 @@
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
 pub struct LoadSettings {
+    /// Allow String control characters.
+    pub allow_string_control_characters: bool,
     /// Ignore incorrect character and kerning counts.
     pub ignore_counts: bool,
 }
@@ -30,9 +32,15 @@ impl LoadSettings {
     // a 'new' function. This should enable us to add additional fields without breaking the
     // existing API.
 
-    /// Set ignore counts to true. Returns self.
+    /// Set ignore_counts to true. Returns self.
     pub fn ignore_counts(mut self) -> Self {
         self.ignore_counts = true;
+        self
+    }
+
+    /// Set allow_string_control_characters to true. Returns self.
+    pub fn allow_string_control_characters(mut self) -> Self {
+        self.allow_string_control_characters = true;
         self
     }
 }
