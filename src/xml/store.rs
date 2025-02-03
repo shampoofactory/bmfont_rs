@@ -96,7 +96,12 @@ impl StoreXml for Font {
         self.common.store(&mut writer, escaper)?;
         writeln!(writer, "  <pages>")?;
         self.pages.iter().enumerate().try_for_each(|(i, s)| {
-            write!(writer, "    <page id=\"{}\" file=\"{}\" />", i, escaper.escape_str(s)?)
+            write!(
+                writer,
+                "    <page id=\"{}\" file=\"{}\" />",
+                i,
+                escaper.escape_value("page id", s)?
+            )
         })?;
         writeln!(writer, "  </pages>")?;
         writeln!(writer, "  <chars count=\"{}\">", self.chars.len())?;
@@ -188,7 +193,7 @@ impl StoreXml for Info {
                    spacing=\"{},{}\" \
                    outline=\"{}\" \
                />",
-            escaper.escape_str(&self.face)?,
+            escaper.escape_value("info face", &self.face)?,
             self.size,
             self.bold as u32,
             self.italic as u32,
@@ -228,9 +233,9 @@ impl Escaper {
         Self { builder: String::with_capacity(capacity) }
     }
 
-    fn escape_str<'a>(&'a mut self, str: &str) -> crate::Result<&'a str> {
+    fn escape_value<'a>(&'a mut self, path: &str, value: &str) -> crate::Result<&'a str> {
         self.builder.clear();
-        for c in str.chars() {
+        for c in value.chars() {
             match c {
                 '"' => self.builder.push_str("&quot;"),
                 '\'' => self.builder.push_str("&apos;"),
@@ -238,7 +243,10 @@ impl Escaper {
                 '>' => self.builder.push_str("&gt;"),
                 '&' => self.builder.push_str("&amp;"),
                 '\x00'..='\x1F' | '\x7F' => {
-                    return Err(crate::Error::InvalidString { line: None, string: str.to_owned() })
+                    return Err(crate::Error::UnsupportedValueEncoding {
+                        path: path.to_owned(),
+                        value: value.to_owned(),
+                    })
                 }
                 _ => self.builder.push(c),
             }
@@ -255,7 +263,7 @@ mod tests {
         ($name:ident, $str:expr, $string:expr) => {
             #[test]
             fn $name() -> crate::Result<()> {
-                assert_eq!(Escaper::default().escape_str($str)?, $string);
+                assert_eq!(Escaper::default().escape_value("test", $str)?, $string);
                 Ok(())
             }
         };
@@ -275,7 +283,7 @@ mod tests {
         ($name:ident, $str:expr) => {
             #[test]
             fn $name() -> crate::Result<()> {
-                assert!(Escaper::default().escape_str($str).is_err());
+                assert!(Escaper::default().escape_value("test", $str).is_err());
                 Ok(())
             }
         };

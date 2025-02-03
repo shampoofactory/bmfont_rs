@@ -89,7 +89,7 @@ impl StoreFnt for Font {
         self.info.store(&mut writer)?;
         self.common.store(&mut writer)?;
         self.pages.iter().enumerate().try_for_each(|(i, s)| {
-            write!(writer, "page id={} file=\"{}\"\r\n", i, check_str(s)?)
+            write!(writer, "page id={} file=\"{}\"\r\n", i, check_value("page id", s)?)
         })?;
         write!(writer, "chars count={}\r\n", self.chars.len())?;
         self.chars.iter().try_for_each(|u| u.store(&mut writer))?;
@@ -176,7 +176,7 @@ impl StoreFnt for Info {
                 spacing={},{} \
                 outline={}\
                 \r\n",
-            check_str(&self.face)?,
+            check_value("info face", &self.face)?,
             self.size,
             self.bold as u32,
             self.italic as u32,
@@ -206,16 +206,19 @@ impl StoreFnt for Kerning {
     }
 }
 
-fn check_str(str: &str) -> crate::Result<&str> {
-    for c in str.chars() {
+fn check_value<'a>(path: &'a str, value: &'a str) -> crate::Result<&'a str> {
+    for c in value.chars() {
         match c {
             '\x00'..='\x1F' | '"' | '\x7F' => {
-                return Err(crate::Error::InvalidString { line: None, string: str.to_owned() })
+                return Err(crate::Error::UnsupportedValueEncoding {
+                    path: path.to_owned(),
+                    value: value.to_owned(),
+                })
             }
             _ => {}
         }
     }
-    Ok(str)
+    Ok(value)
 }
 
 #[cfg(test)]
@@ -226,7 +229,7 @@ mod tests {
         ($name:ident, $str:expr) => {
             #[test]
             fn $name() -> crate::Result<()> {
-                assert!(check_str($str).is_ok());
+                assert!(check_value("test", $str).is_ok());
                 Ok(())
             }
         };
@@ -241,7 +244,7 @@ mod tests {
         ($name:ident, $str:expr) => {
             #[test]
             fn $name() -> crate::Result<()> {
-                assert!(check_str($str).is_err());
+                assert!(check_value("test", $str).is_err());
                 Ok(())
             }
         };

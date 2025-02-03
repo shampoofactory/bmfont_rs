@@ -149,13 +149,6 @@ pub enum Error {
         /// Realized count.
         realized: usize,
     },
-    /// The string contains invalid characters (encode only).
-    InvalidString {
-        /// Line where the error occurred.
-        line: Option<usize>,
-        /// Invalid string.
-        string: String,
-    },
     /// The tag name is not valid (decode only).
     InvalidTag {
         /// Line where the error occurred.
@@ -180,6 +173,13 @@ pub enum Error {
     UnsupportedBinaryVersion {
         /// Binary version.
         version: u8,
+    },
+    /// The value string contains characters that cannot be encoded.
+    UnsupportedValueEncoding {
+        /// Path/ location.
+        path: String,
+        /// Value.
+        value: String,
     },
     /// Internal error. This should not occur.
     Internal {
@@ -256,9 +256,6 @@ impl fmt::Display for Error {
             Error::InvalidPageCount { specified, realized } => {
                 write!(f, "invalid page count: specified: {}, realized: {}", specified, realized)
             }
-            Error::InvalidString { line, string } => {
-                write!(f, "{}invalid string: '{}'", format_line(line), string)
-            }
             Error::InvalidTag { line, tag } => {
                 write!(f, "{}invalid tag: '{}'", format_line(line), tag)
             }
@@ -273,6 +270,9 @@ impl fmt::Display for Error {
             }
             Error::UnsupportedBinaryVersion { version } => {
                 write!(f, "unsupported version: {}", version)
+            }
+            Error::UnsupportedValueEncoding { path, value } => {
+                write!(f, "{}, unsupported value encoding: '{}'", path, value)
             }
             Error::Internal { err } => {
                 write!(f, "internal error: {}", err)
