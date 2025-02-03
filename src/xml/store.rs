@@ -255,9 +255,7 @@ mod tests {
         ($name:ident, $str:expr, $string:expr) => {
             #[test]
             fn $name() -> crate::Result<()> {
-                let mut escaper = Escaper::default();
-                let escaped = escaper.escape_str($str)?;
-                assert_eq!(escaped, $string);
+                assert_eq!(Escaper::default().escape_str($str)?, $string);
                 Ok(())
             }
         };
