@@ -150,6 +150,22 @@ fn text_small_to_writer() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[test]
+fn text_small_invalid_face_string() -> Result<(), Box<dyn Error>> {
+    let mut small = small();
+    small.info.face = "\x00".to_owned();
+    assert!(text::to_string(&small).is_err());
+    Ok(())
+}
+
+#[test]
+fn text_small_invalid_page_string() -> Result<(), Box<dyn Error>> {
+    let mut small = small();
+    small.pages[0] = "\x00".to_owned();
+    assert!(text::to_string(&small).is_err());
+    Ok(())
+}
+
 #[cfg(feature = "xml")]
 #[test]
 fn xml_small_from_bytes() -> Result<(), Box<dyn Error>> {

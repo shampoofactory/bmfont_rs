@@ -88,10 +88,9 @@ impl StoreFnt for Font {
     fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
         self.info.store(&mut writer)?;
         self.common.store(&mut writer)?;
-        self.pages
-            .iter()
-            .enumerate()
-            .try_for_each(|(i, s)| write!(writer, "page id={} file=\"{}\"\r\n", i, s))?;
+        self.pages.iter().enumerate().try_for_each(|(i, s)| {
+            write!(writer, "page id={} file=\"{}\"\r\n", i, check_str(s)?)
+        })?;
         write!(writer, "chars count={}\r\n", self.chars.len())?;
         self.chars.iter().try_for_each(|u| u.store(&mut writer))?;
         write!(writer, "kernings count={}\r\n", self.kernings.len())?;
@@ -177,7 +176,7 @@ impl StoreFnt for Info {
                 spacing={},{} \
                 outline={}\
                 \r\n",
-            self.face,
+            check_str(&self.face)?,
             self.size,
             self.bold as u32,
             self.italic as u32,
@@ -205,4 +204,53 @@ impl StoreFnt for Kerning {
             self.first, self.second, self.amount
         )
     }
+}
+
+fn check_str(str: &str) -> crate::Result<&str> {
+    for c in str.chars() {
+        match c {
+            '\x00'..='\x1F' | '"' | '\x7F' => {
+                return Err(crate::Error::InvalidString { line: None, string: str.to_owned() })
+            }
+            _ => {}
+        }
+    }
+    Ok(str)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! check_ok {
+        ($name:ident, $str:expr) => {
+            #[test]
+            fn $name() -> crate::Result<()> {
+                assert!(check_str($str).is_ok());
+                Ok(())
+            }
+        };
+    }
+
+    check_ok!(check_ok_null, "");
+    check_ok!(check_ok_space, " ");
+    check_ok!(check_ok_tilde, "~");
+    check_ok!(check_ok_unicode_face, "☺");
+
+    macro_rules! check_err {
+        ($name:ident, $str:expr) => {
+            #[test]
+            fn $name() -> crate::Result<()> {
+                assert!(check_str($str).is_err());
+                Ok(())
+            }
+        };
+    }
+
+    check_err!(check_err_nul, "\x00");
+    check_err!(check_err_us, "\x1F");
+    check_err!(check_err_del, "\x7F");
+    check_err!(check_err_quote, "\"");
+    check_err!(check_err_nl, "\n");
+    check_err!(check_err_cr, "\r");
 }
