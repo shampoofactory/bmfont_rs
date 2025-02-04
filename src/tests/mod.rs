@@ -278,40 +278,47 @@ fn json_small_string_escape() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn text_binary_med_cmp() -> Result<(), Box<dyn Error>> {
-    let text_src = include_bytes!("../../data/ok/small.txt");
+fn text_binary_medium_cmp() -> Result<(), Box<dyn Error>> {
+    let text_src = include_bytes!("../../data/ok/medium.txt");
     let text_font = text::from_bytes(text_src)?;
-    let bin_src = include_bytes!("../../data/ok/small.bin");
-    let bin_font = binary::from_bytes(bin_src)?;
-    assert_eq!(text_font, bin_font);
+    let binary_src = include_bytes!("../../data/ok/medium.bin");
+    let binary_font = binary::from_bytes(binary_src)?;
+    assert_eq!(text_font, binary_font);
     Ok(())
 }
 
 #[cfg(feature = "xml")]
 #[test]
-fn xml_binary_med_cmp() -> Result<(), Box<dyn Error>> {
-    let xml_src = include_bytes!("../../data/ok/small.xml");
+fn xml_binary_medium_cmp() -> Result<(), Box<dyn Error>> {
+    let xml_src = include_bytes!("../../data/ok/medium.xml");
     let xml_font = xml::from_bytes(xml_src)?;
-    let bin_src = include_bytes!("../../data/ok/small.bin");
-    let bin_font = binary::from_bytes(bin_src)?;
-    assert_eq!(xml_font, bin_font);
+    let binary_src = include_bytes!("../../data/ok/medium.bin");
+    let binary_font = binary::from_bytes(binary_src)?;
+    assert_eq!(xml_font, binary_font);
     Ok(())
 }
 
-#[cfg(feature = "xml")]
+#[cfg(feature = "serde")]
 #[test]
-fn xml_text_med_cmp() -> Result<(), Box<dyn Error>> {
-    let xml_src = include_bytes!("../../data/ok/small.xml");
-    let xml_font = xml::from_bytes(xml_src)?;
-    let text_src = include_bytes!("../../data/ok/small.txt");
-    let text_font = text::from_bytes(text_src)?;
-    assert_eq!(xml_font, text_font);
+fn json_binary_medium_cmp() -> Result<(), Box<dyn Error>> {
+    let json_src = include_bytes!("../../data/ok/medium.json");
+    let json_font: Font = serde_json::de::from_slice(json_src)?;
+    let binary_src = include_bytes!("../../data/ok/medium.bin");
+    let binary_font = binary::from_bytes(binary_src)?;
+    assert_eq!(json_font, binary_font);
     Ok(())
 }
 
 #[test]
 fn validate_small() -> crate::Result<()> {
     small().validate_references()
+}
+
+#[test]
+fn validate_medium() -> crate::Result<()> {
+    let src = include_bytes!("../../data/ok/medium.bin");
+    let font = binary::from_bytes(src)?;
+    font.validate_references()
 }
 
 macro_rules! err {
