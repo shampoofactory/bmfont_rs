@@ -103,7 +103,7 @@ fn binary_small_to_writer() -> Result<(), Box<dyn Error>> {
 fn binary_multi_page() -> Result<(), Box<dyn Error>> {
     let multi_page = include_bytes!("../../data/ok/multi-page.bin");
     let font = binary::from_bytes(multi_page)?;
-    assert_eq!(font.pages.len(), font.common.pages.into());
+    assert_eq!(font.pages.len(), font.common.pages as usize);
     Ok(())
 }
 
@@ -244,6 +244,36 @@ fn xml_small_invalid_page_string() -> Result<(), Box<dyn Error>> {
     let mut small = small();
     small.pages[0] = "\x00".to_owned();
     assert!(xml::to_writer(&mut vec, &small).is_err());
+    Ok(())
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn json_small_from_str() -> Result<(), Box<dyn Error>> {
+    let src = include_str!("../../data/ok/small.json");
+    let font: Font = serde_json::de::from_str(src)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn json_small_to_string() -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_string_pretty(&small())?;
+    let font: Font = serde_json::de::from_str(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn json_small_string_escape() -> Result<(), Box<dyn Error>> {
+    let mut small = small();
+    small.info.face = "<\"&'☺'&\">".to_owned();
+    small.pages[0] = "<\"&'☺'&\">.png".to_owned();
+    let json = serde_json::to_string_pretty(&small)?;
+    let font: Font = serde_json::de::from_str(&json)?;
+    assert_eq!(font, small);
     Ok(())
 }
 

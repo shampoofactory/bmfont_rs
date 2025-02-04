@@ -161,13 +161,13 @@ pub struct Common {
     pub scale_h: u16,
     /// The number of texture pages included in the font.
     pub pages: u16,
+    /// True if the monochrome characters have been packed into each of the texture channels.
+    /// In this case the channel packing describes what is stored in each channel.
     #[cfg_attr(
-        all(feature = "serde", feature = "serde_boolint"),
+        feature = "serde",
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
-    /// True if the monochrome characters have been packed into each of the texture channels.
-    /// In this case the channel packing describes what is stored in each channel.
     pub packed: bool,
     /// Alpha channel packing.
     pub alpha_chnl: Packing,
@@ -224,14 +224,14 @@ pub struct Info {
     pub size: i16,
     /// True if the font is bold.
     #[cfg_attr(
-        all(feature = "serde", feature = "serde_boolint"),
+        feature = "serde",
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
     pub bold: bool,
     /// True if the font is italic.
     #[cfg_attr(
-        all(feature = "serde", feature = "serde_boolint"),
+        feature = "serde",
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
@@ -239,7 +239,7 @@ pub struct Info {
     /// The name of the OEM charset (when not Unicode).
     pub charset: Charset,
     #[cfg_attr(
-        all(feature = "serde", feature = "serde_boolint"),
+        feature = "serde",
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
@@ -249,7 +249,7 @@ pub struct Info {
     pub stretch_h: u16,
     /// True if smoothing was turned on.
     #[cfg_attr(
-        all(feature = "serde", feature = "serde_boolint"),
+        feature = "serde",
         serde(serialize_with = "se_bool"),
         serde(deserialize_with = "de_bool")
     )]
@@ -682,15 +682,12 @@ impl Parse for Chnl {
     }
 }
 
-#[cfg(all(feature = "serde", feature = "serde_boolint"))]
+#[cfg(feature = "serde")]
 pub fn se_bool<S: Serializer>(v: &bool, s: S) -> Result<S::Ok, S::Error> {
     (*v as u8).serialize(s)
 }
 
-#[cfg(all(feature = "serde", feature = "serde_boolint"))]
-pub fn de_bool<'de, D: Deserializer<'de>>(d: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
+#[cfg(feature = "serde")]
+pub fn de_bool<'de, D: Deserializer<'de>>(d: D) -> Result<bool, D::Error> {
     Ok(u8::deserialize(d)? != 0)
 }

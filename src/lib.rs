@@ -116,11 +116,6 @@ JSON is not natively supported.
 However, as we do support [Serde](https://github.com/serde-rs/serde), we can easily cobble together
 support with [Serde JSON](https://github.com/serde-rs/serde).
 
-By default our Serde serializers map boolean types to JSON boolean types: `true` and `false`.
-However, at least one JSON BMFont parser expects integer boolean types: `1` and `0`.
-To facilitate the latter we can pass `--features serde_boolint`, which casts boolean values to
-integers and vice versa.
-
 ## BMFont
 
 The BMFont homepage is [here](http://www.angelcode.com/products/bmfont/). The site includes
