@@ -8,11 +8,13 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 ## In progress
 
 API:
-- xml/ text store methods now check for invalid string value encoding
-- load methods now check for potentially unsafe value strings
+- xml/ text store methods now check for invalid string value encoding.
+- load methods now check for potentially unsafe value strings.
+- json serde simplified.
 
 Bugfixes:
-- xml store methods now properly escape the following string characters: `\ ' < > &`
+- xml store methods now properly escape the following string characters: `\ ' < > &`.
+- medium file tests now use the correct files.
 
 Docs:
 - fix typos
