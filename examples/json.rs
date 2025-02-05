@@ -1,38 +1,37 @@
 use std::error::Error;
 use std::result::Result;
 
-#[cfg(feature = "serde")]
-use bmfont_rs::Font;
+#[cfg(feature = "json")]
 
 /// JSON Serde import/ export.
 ///
-/// JSON is a non-standard BMFont import/ export format. Other implementations may vary in output.
+/// Call with feature `json`.
 ///
-/// Call with feature `serde`.
-///
-/// `cargo run --example json --features serde`
-#[cfg(feature = "serde")]
+/// `cargo run --example json --features json`
+#[cfg(feature = "json")]
 fn main() -> Result<(), Box<dyn Error>> {
     // Load some sample font data.
-    let text = include_str!("../data/ok/small.txt");
-    let font = bmfont_rs::text::from_str(text)?;
-    // Export.
-    let json = serde_json::ser::to_string_pretty(&font)?;
-    println!("JSON out:");
+    let json = include_str!("../data/ok/small.json");
+    println!("JSON in:");
     println!("{}\n", json);
 
     // Import.
-    let font: Font = serde_json::de::from_str(&json)?;
+    let font = bmfont_rs::json::from_str(json)?;
     println!("Font:");
     println!("{:#?}\n", font);
+
+    // Export.
+    let json = bmfont_rs::json::to_string_pretty(&font)?;
+    println!("JSON pretty out:");
+    println!("{}\n", json);
 
     Ok(())
 }
 
-/// Not the real main. We expect to have the `serde` feature.
-#[cfg(not(feature = "serde"))]
+/// Not the real main. We expect to have the `json` feature.
+#[cfg(not(feature = "json"))]
 fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("Error, use:");
-    eprintln!("cargo run --example json --features serde");
+    eprintln!("cargo run --example json --features json");
     Ok(())
 }

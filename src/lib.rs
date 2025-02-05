@@ -148,6 +148,8 @@ mod tagged_attributes;
 mod tests;
 
 pub mod binary;
+#[cfg(feature = "json")]
+pub mod json;
 pub mod text;
 #[cfg(feature = "xml")]
 pub mod xml;

@@ -24,6 +24,7 @@ Also, unless specified by compilation switches, it doesn't pull in any external 
 The modules are organized around the core BMFont file formats:
 - `text` : text format
 - `binary` : binary format
+- `json` : JSON format, requires: `--features json`
 - `xml` : XML format, requires: `--features xml`
 
 Each module is provides a number of import `from_...` and export: `to_...` functions.
@@ -87,7 +88,6 @@ fn main() -> bmfont_rs::Result<()> {
 }
 ```
 
-
 ## Examples: render
 
 ![Alt text](data/examples/render_out.png)
@@ -131,6 +131,16 @@ Execute from the project root with:
 cargo run --example binary
 ```
 
+## Examples: JSON
+
+JSON functionality is feature gated: `--features json`.
+When activated, additional dependencies are pulled in assist with JSON processing.
+
+Execute from the project root with:
+```bash
+cargo run --example json --features json
+```
+
 ## Examples: XML
 
 XML functionality is feature gated: `--features xml`.
@@ -139,16 +149,6 @@ When activated, additional dependencies are pulled in assist with XML processing
 Execute from the project root with:
 ```bash
 cargo run --example xml --features xml
-```
-
-## Examples: JSON
-
-JSON is not natively supported.
-However, as we do support [Serde](https://github.com/serde-rs/serde), we can easily cobble together support with [Serde JSON](https://github.com/serde-rs/serde).
-
-Execute from the project root with:
-```bash
-cargo run --example json --features serde`
 ```
 
 ## BMFont

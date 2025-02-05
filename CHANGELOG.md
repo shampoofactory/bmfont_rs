@@ -8,9 +8,9 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 ## In progress
 
 API:
+- add formal json support
 - xml/ text store methods now check for invalid string value encoding.
 - load methods now check for potentially unsafe value strings.
-- json serde simplified.
 
 Bugfixes:
 - xml store methods now properly escape the following string characters: `\ ' < > &`.

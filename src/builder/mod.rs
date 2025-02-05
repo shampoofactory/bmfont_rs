@@ -35,6 +35,21 @@ impl<'a> FontBuilder<'a> {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn with_font(font: Font, settings: &'a LoadSettings) -> Self {
+        let Font { info, common, pages, chars, kernings } = font;
+        Self {
+            settings,
+            info: Some(info),
+            common: Some(common),
+            pages,
+            chars,
+            char_count: None,
+            kernings,
+            kerning_count: None,
+        }
+    }
+
     pub fn build(mut self) -> crate::Result<Font> {
         let info = self.info.take().ok_or(Error::NoInfoBlock)?;
         let common = self.common.take().ok_or(Error::NoCommonBlock)?;

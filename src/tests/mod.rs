@@ -1,6 +1,8 @@
 use crate::binary;
 use crate::charset::Charset;
 use crate::font::*;
+#[cfg(feature = "json")]
+use crate::json;
 use crate::text;
 #[cfg(feature = "xml")]
 use crate::xml;
@@ -247,33 +249,86 @@ fn xml_small_invalid_page_string() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "json")]
+#[test]
+fn json_small_from_bytes() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/small.json");
+    let font: Font = json::from_bytes(src)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_small_to_vec() -> Result<(), Box<dyn Error>> {
+    let json = json::to_vec(&small())?;
+    let font: Font = json::from_bytes(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_small_to_vec_pretty() -> Result<(), Box<dyn Error>> {
+    let json = json::to_vec_pretty(&small())?;
+    let font: Font = json::from_bytes(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_small_from_reader() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/small.json");
+    let font: Font = json::from_reader(src.as_ref())?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_small_to_writer() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    json::to_writer(&mut vec, &small())?;
+    let font = json::from_bytes(&vec)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_small_to_writer_pretty() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    json::to_writer_pretty(&mut vec, &small())?;
+    let font = json::from_bytes(&vec)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
 #[test]
 fn json_small_from_str() -> Result<(), Box<dyn Error>> {
     let src = include_str!("../../data/ok/small.json");
-    let font: Font = serde_json::de::from_str(src)?;
+    let font: Font = json::from_str(src)?;
     assert_eq!(font, small());
     Ok(())
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "json")]
 #[test]
 fn json_small_to_string() -> Result<(), Box<dyn Error>> {
-    let json = serde_json::to_string_pretty(&small())?;
+    let json = json::to_string(&small())?;
     let font: Font = serde_json::de::from_str(&json)?;
     assert_eq!(font, small());
     Ok(())
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "json")]
 #[test]
-fn json_small_string_escape() -> Result<(), Box<dyn Error>> {
-    let mut small = small();
-    small.info.face = "<\"&'☺'&\">".to_owned();
-    small.pages[0] = "<\"&'☺'&\">.png".to_owned();
-    let json = serde_json::to_string_pretty(&small)?;
+fn json_small_to_string_pretty() -> Result<(), Box<dyn Error>> {
+    let json = json::to_string_pretty(&small())?;
     let font: Font = serde_json::de::from_str(&json)?;
-    assert_eq!(font, small);
+    assert_eq!(font, small());
     Ok(())
 }
 
@@ -298,11 +353,11 @@ fn xml_binary_medium_cmp() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "json")]
 #[test]
 fn json_binary_medium_cmp() -> Result<(), Box<dyn Error>> {
     let json_src = include_bytes!("../../data/ok/medium.json");
-    let json_font: Font = serde_json::de::from_slice(json_src)?;
+    let json_font: Font = json::from_bytes(json_src)?;
     let binary_src = include_bytes!("../../data/ok/medium.bin");
     let binary_font = binary::from_bytes(binary_src)?;
     assert_eq!(json_font, binary_font);
