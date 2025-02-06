@@ -3,7 +3,7 @@ use std::result::Result;
 
 /// Binary import/ export.
 ///
-/// `cargo run --example bin`
+/// `cargo run --example binary`
 fn main() -> Result<(), Box<dyn Error>> {
     // Load some sample font data.
     let bin = include_bytes!("../data/ok/small.bin");
