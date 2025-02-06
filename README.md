@@ -68,7 +68,7 @@ Unfortunately, there exist several BMFont tools that output broken files.
 Either they do not comply with the BMFont standard as written or contain other errors.
 When attempting to load these files, `bmfont_rs` will emit an error describing the problem.
 
-We may be able to work around or ignore some of these problems using the [LoadSettings](crate::LoadSettings) struct.
+We may be able to work around or ignore some of these problems using the [LoadSettings](https://docs.rs/bmfont_rs/latest/bmfont_rs/struct.LoadSettings.html) struct.
 Simply build the `LoadSettings` instance using the desired behavior switches and pass it into the `ext` form of the load function.
 
 If you encounter a BMFont file that appears to work with other tools, but not `bmfont_rs` then kindly open a ticket.
@@ -87,6 +87,18 @@ fn main() -> bmfont_rs::Result<()> {
     println!("{:?}", font);
 }
 ```
+
+## Advanced usage - string safety
+
+This library defines unsafe strings as those containing ASCII control characters. Specifically ASCII codes 00 to 31 (inclusive) and 127.
+
+When attempting to load files containing ASCII control characters, an [UnsafeValueString](https://docs.rs/bmfont_rs/latest/bmfont_rs/enum.Error.html) error is thrown. This behavior can be disabled using the [LoadSettings](https://docs.rs/bmfont_rs/latest/bmfont_rs/struct.LoadSettings.html) struct.
+
+Any additional string/ input sanitization MUST be undertaken by users in accordance with their use cases.
+
+The BMFont format specifies strings at:
+- Font::info::face
+- Font::pages 
 
 ## Examples: render
 

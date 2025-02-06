@@ -1,15 +1,15 @@
 #![warn(missing_docs)]
 /*!
-BMFont parsing library.
+BMFont font descriptor parsing library.
 
 Manipulate, import and export [BMFont](http://www.angelcode.com/products/bmfont/)
-files in text, binary, XML formats, and more.
+files in text, binary, XML formats and more.
 
 ## Overview
 
 This crate provides building, manipulation, import, and export functions for BMFont descriptor files.
 
-The core data object is the [Font](crate::Font).
+The core data object is the [Font].
 This struct holds, in its entirety, the data contained within a BMFont descriptor file.
 When paired with the associated texture bitmap file/s, we have the information required to render the font in question.
 
@@ -23,6 +23,7 @@ Also, unless specified by compilation switches, it doesn't pull in any external 
 The modules are organized around the core BMFont file formats:
 - `text` : text format
 - `binary` : binary format
+- `json` : JSON format, requires: `--features json`
 - `xml` : XML format, requires: `--features xml`
 
 Each module is provides a number of import `from_...` and export: `to_...` functions.
@@ -66,7 +67,7 @@ Unfortunately, there exist several BMFont tools that output broken files.
 Either they do not comply with the BMFont standard as written or contain other errors.
 When attempting to load these files, `bmfont_rs` will emit an error describing the problem.
 
-We may be able to work around or ignore some of these problems using the [LoadSettings](crate::LoadSettings) struct.
+We may be able to work around or ignore some of these problems using the [LoadSettings] struct.
 Simply build the `LoadSettings` instance using the desired behavior switches and pass it into the `ext` form of the load function.
 
 If you encounter a BMFont file that appears to work with other tools, but not `bmfont_rs` then kindly open a ticket.
@@ -87,6 +88,18 @@ fn main() -> bmfont_rs::Result<()> {
 }
 ```
 
+## Advanced usage - string safety
+
+This library defines unsafe strings as those containing ASCII control characters. Specifically ASCII codes 00 to 31 (inclusive) and 127.
+
+When attempting to load files containing ASCII control characters, an [UnsafeValueString](crate::Error::UnsafeValueString) error is thrown. This behavior can be disabled using the [LoadSettings] struct.
+
+Any additional string/ input sanitization MUST be undertaken by users in accordance with their use cases.
+
+The BMFont format specifies strings at:
+- [Info::face]
+- [Font::pages]
+
 ## Rendering fonts
 
 The [render.rs](https://github.com/shampoofactory/bmfont_rs/blob/main/examples/render.rs)
@@ -99,22 +112,45 @@ To view the example's output and for details on how to run it, kindly refer to t
 Due to the numerous graphics back-ends and usage requirements, this crate makes no attempt at
 offering a universal rendering solution.
 
-## Serde
+## Examples: text format
 
-[Font] implements [Serde's](https://github.com/serde-rs/serde) `serialize` and `deserialize` traits.
-These are feature gated and require: `--features serde`.
+BMFont text format files are ubiquitous, human readable and easily tinkered with.
+However, not all tools obey the correct parameter types or constraints, which may result in incompatibility.
 
-## JSON
+Execute from the project root with:
+```bash
+cargo run --example text
+```
 
-The [json.rs](https://github.com/shampoofactory/bmfont_rs/blob/main/examples/json.rs) example
-demonstrates this.
+## Examples: binary
 
-For details on how to run the example, kindly refer to the repository
-[README](https://github.com/shampoofactory/bmfont_rs/blob/main/README.md#examples-json).
+BMFont binary files are compact, unambiguous and efficient to parse.
+However, tooling support may be limited and they are not human readable.
 
-JSON is not natively supported.
-However, as we do support [Serde](https://github.com/serde-rs/serde), we can easily cobble together
-support with [Serde JSON](https://github.com/serde-rs/serde).
+Execute from the project root with:
+```bash
+cargo run --example binary
+```
+
+## Examples: JSON
+
+JSON functionality is feature gated: `--features json`.
+When activated, additional dependencies are pulled in assist with JSON processing.
+
+Execute from the project root with:
+```bash
+cargo run --example json --features json
+```
+
+## Examples: XML
+
+XML functionality is feature gated: `--features xml`.
+When activated, additional dependencies are pulled in assist with XML processing.
+
+Execute from the project root with:
+```bash
+cargo run --example xml --features xml
+```
 
 ## BMFont
 
