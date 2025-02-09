@@ -201,7 +201,7 @@ impl PackDynLen<V3> for Font {
 
 impl PackDyn<V3> for Font {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
-        let dyn_len = PackDynLen::<V3>::dyn_len(self);
+        let mark = dst.len();
         // Magic V3
         Magic::new(3).pack(dst)?;
         // Info V2
@@ -222,7 +222,7 @@ impl PackDyn<V3> for Font {
                 .pack(dst)?;
             PackDyn::<V1>::pack_dyn(&self.kernings, dst)?;
         }
-        Ok(dyn_len)
+        Ok(dst.len() - mark)
     }
 }
 
@@ -404,11 +404,11 @@ impl PackDynLen<C> for Vec<String> {
 
 impl PackDyn<C> for Vec<String> {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
-        let mut dyn_len = 0;
+        let mark = dst.len();
         for s in self.iter() {
-            dyn_len += PackDyn::<C>::pack_dyn(&s.as_str(), dst)?;
+            PackDyn::<C>::pack_dyn(&s.as_str(), dst)?;
         }
-        Ok(dyn_len)
+        Ok(dst.len() - mark)
     }
 }
 
@@ -433,10 +433,11 @@ impl PackDynLen<V1> for Vec<Char> {
 
 impl PackDyn<V1> for Vec<Char> {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        let mark = dst.len();
         for char in self.iter() {
             Pack::<V1>::pack(char, dst)?;
         }
-        Ok(<Char as PackLen<V1>>::PACK_LEN * self.len())
+        Ok(dst.len() - mark)
     }
 }
 
@@ -450,10 +451,11 @@ impl PackDynLen<V1> for Vec<Kerning> {
 
 impl PackDyn<V1> for Vec<Kerning> {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        let mark = dst.len();
         for kerning in self.iter() {
             Pack::<V1>::pack(kerning, dst)?;
         }
-        Ok(<Kerning as PackLen<V1>>::PACK_LEN * self.len())
+        Ok(dst.len() - mark)
     }
 }
 
@@ -531,10 +533,11 @@ impl PackDynLen<C> for &str {
 
 impl PackDyn<C> for &str {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        let mark = dst.len();
         let bytes = c_string(self.as_bytes())?;
         dst.extend_from_slice(bytes);
         dst.push(0);
-        Ok(bytes.len() + 1)
+        Ok(dst.len() - mark)
     }
 }
 
