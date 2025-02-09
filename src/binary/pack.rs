@@ -19,9 +19,12 @@ pub trait Unpack<T = ()>: PackLen<T> + Sized {
 
     #[inline(always)]
     fn unpack_take(src: &mut &[u8]) -> crate::Result<Self> {
-        let obj = Self::unpack(src)?;
-        *src = &src[Self::PACK_LEN..];
-        Ok(obj)
+        if src.len() < Self::PACK_LEN {
+            return underflow();
+        }
+        let (obj, overflow) = src.split_at(Self::PACK_LEN);
+        *src = overflow;
+        Self::unpack(obj)
     }
 
     #[inline(always)]
@@ -33,15 +36,6 @@ pub trait Unpack<T = ()>: PackLen<T> + Sized {
             take(Self::unpack_take(&mut src)?)?;
         }
         Ok(())
-    }
-
-    #[inline(always)]
-    fn unpack_tight(src: &[u8]) -> crate::Result<Self> {
-        if src.len() == Self::PACK_LEN {
-            Self::unpack(src)
-        } else {
-            overflow()
-        }
     }
 }
 

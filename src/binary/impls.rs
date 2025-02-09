@@ -79,10 +79,12 @@ macro_rules! unpack {
             len += size_of::<$u>();
         )*
         if src.len() < len {
-            None
+            pack::underflow()
+        } else if src.len() > len {
+            pack::overflow()
         } else {
             let mut off = 0;
-            Some((
+            Ok((
                     $({
                         let mut bytes = [0u8; size_of::<$u>()];
                         let end = off + size_of::<$u>();
@@ -141,11 +143,7 @@ impl Pack for Magic {
 
 impl Unpack for Magic {
     fn unpack(src: &[u8]) -> crate::Result<Self> {
-        if let Some((magic,)) = unpack!(src, u32) {
-            Ok(Self(magic))
-        } else {
-            pack::underflow()
-        }
+        unpack!(src, u32).map(|(magic,)| Self(magic))
     }
 }
 
@@ -175,11 +173,7 @@ impl Pack for Block {
 
 impl Unpack for Block {
     fn unpack(src: &[u8]) -> crate::Result<Self> {
-        if let Some((id, len)) = unpack!(src, u8, u32) {
-            Ok(Self { id, len })
-        } else {
-            pack::underflow()
-        }
+        unpack!(src, u8, u32).map(|(id, len)| Self { id, len })
     }
 }
 
@@ -289,53 +283,53 @@ impl PackDyn<V2> for Info {
 
 impl UnpackDyn<V2> for Info {
     fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
-        if let Some((
-            size,
-            bits,
-            charset,
-            stretch_h,
-            aa,
-            padding_up,
-            padding_right,
-            padding_down,
-            padding_left,
-            spacing_horiz,
-            spacing_vert,
-            outline,
-        )) = unpack!(src, i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8)
-        {
-            let dyn_min = <Self as PackDynLen<V2>>::PACK_DYN_MIN;
-            let src = &src[dyn_min..];
-            let (face, face_len) = UnpackDyn::<C>::unpack_dyn(src)?;
-            let padding = Padding::new(padding_up, padding_right, padding_down, padding_left);
-            let spacing = Spacing::new(spacing_horiz, spacing_vert);
-            let bits = BitField(bits);
-            let smooth = bits.get(SMOOTH);
-            let unicode = bits.get(UNICODE);
-            let italic = bits.get(ITALIC);
-            let bold = bits.get(BOLD);
-            let _fixed_height = bits.get(FIXED_HEIGHT);
-            let charset =
-                if unicode && charset == 0 { Charset::Null } else { Charset::Tagged(charset) };
+        let dyn_min = <Self as PackDynLen<V2>>::PACK_DYN_MIN;
+        match unpack!(&src[..dyn_min], i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8) {
             Ok((
-                Self {
-                    face,
-                    size,
-                    bold,
-                    italic,
-                    charset,
-                    unicode,
-                    stretch_h,
-                    smooth,
-                    aa,
-                    padding,
-                    spacing,
-                    outline,
-                },
-                dyn_min + face_len,
-            ))
-        } else {
-            pack::underflow()
+                size,
+                bits,
+                charset,
+                stretch_h,
+                aa,
+                padding_up,
+                padding_right,
+                padding_down,
+                padding_left,
+                spacing_horiz,
+                spacing_vert,
+                outline,
+            )) => {
+                let src = &src[dyn_min..];
+                let (face, face_len) = UnpackDyn::<C>::unpack_dyn(src)?;
+                let padding = Padding::new(padding_up, padding_right, padding_down, padding_left);
+                let spacing = Spacing::new(spacing_horiz, spacing_vert);
+                let bits = BitField(bits);
+                let smooth = bits.get(SMOOTH);
+                let unicode = bits.get(UNICODE);
+                let italic = bits.get(ITALIC);
+                let bold = bits.get(BOLD);
+                let _fixed_height = bits.get(FIXED_HEIGHT);
+                let charset =
+                    if unicode && charset == 0 { Charset::Null } else { Charset::Tagged(charset) };
+                Ok((
+                    Self {
+                        face,
+                        size,
+                        bold,
+                        italic,
+                        charset,
+                        unicode,
+                        stretch_h,
+                        smooth,
+                        aa,
+                        padding,
+                        spacing,
+                        outline,
+                    },
+                    dyn_min + face_len,
+                ))
+            }
+            Err(err) => Err(err),
         }
     }
 }
@@ -367,35 +361,35 @@ impl Pack<V3> for Common {
 
 impl Unpack<V3> for Common {
     fn unpack(src: &[u8]) -> crate::Result<Self> {
-        if let Some((
-            line_height,
-            base,
-            scale_w,
-            scale_h,
-            pages,
-            bits,
-            alpha_chnl,
-            red_chnl,
-            green_chnl,
-            blue_chnl,
-        )) = unpack!(src, u16, u16, u16, u16, u16, u8, u8, u8, u8, u8)
-        {
-            let bits = BitField(bits);
-            let packed = bits.get(PACKED);
-            Ok(Self {
+        match unpack!(src, u16, u16, u16, u16, u16, u8, u8, u8, u8, u8) {
+            Ok((
                 line_height,
                 base,
                 scale_w,
                 scale_h,
                 pages,
-                packed,
-                alpha_chnl: parse_u8(alpha_chnl)?,
-                red_chnl: parse_u8(red_chnl)?,
-                green_chnl: parse_u8(green_chnl)?,
-                blue_chnl: parse_u8(blue_chnl)?,
-            })
-        } else {
-            pack::underflow()
+                bits,
+                alpha_chnl,
+                red_chnl,
+                green_chnl,
+                blue_chnl,
+            )) => {
+                let bits = BitField(bits);
+                let packed = bits.get(PACKED);
+                Ok(Self {
+                    line_height,
+                    base,
+                    scale_w,
+                    scale_h,
+                    pages,
+                    packed,
+                    alpha_chnl: parse_u8(alpha_chnl)?,
+                    red_chnl: parse_u8(red_chnl)?,
+                    green_chnl: parse_u8(green_chnl)?,
+                    blue_chnl: parse_u8(blue_chnl)?,
+                })
+            }
+            Err(err) => Err(err),
         }
     }
 }
@@ -488,10 +482,8 @@ impl Pack<V1> for Char {
 
 impl Unpack<V1> for Char {
     fn unpack(src: &[u8]) -> crate::Result<Self> {
-        if let Some((id, x, y, width, height, xoffset, yoffset, xadvance, page, chnl)) =
-            unpack!(src, u32, u16, u16, u16, u16, i16, i16, i16, u8, u8)
-        {
-            Ok(Self {
+        match unpack!(src, u32, u16, u16, u16, u16, i16, i16, i16, u8, u8) {
+            Ok((id, x, y, width, height, xoffset, yoffset, xadvance, page, chnl)) => Ok(Self {
                 id,
                 x,
                 y,
@@ -502,9 +494,8 @@ impl Unpack<V1> for Char {
                 xadvance,
                 page,
                 chnl: parse_u8(chnl)?,
-            })
-        } else {
-            pack::underflow()
+            }),
+            Err(err) => Err(err),
         }
     }
 }
@@ -522,10 +513,9 @@ impl Pack<V1> for Kerning {
 
 impl Unpack<V1> for Kerning {
     fn unpack(src: &[u8]) -> crate::Result<Self> {
-        if let Some((first, second, amount)) = unpack!(src, u32, u32, i16) {
-            Ok(Self { first, second, amount })
-        } else {
-            pack::underflow()
+        match unpack!(src, u32, u32, i16) {
+            Ok((first, second, amount)) => Ok(Self { first, second, amount }),
+            Err(err) => Err(err),
         }
     }
 }

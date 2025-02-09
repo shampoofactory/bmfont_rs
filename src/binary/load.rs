@@ -131,7 +131,7 @@ impl<'a> FontBuilderBinary<'a> {
 
     fn set_common(&mut self, src: &[u8]) -> crate::Result<()> {
         let common = match self.version {
-            3 => <Common as Unpack<V3>>::unpack_tight(src)?,
+            3 => <Common as Unpack<V3>>::unpack(src)?,
             _ => unreachable!(),
         };
         self.builder.set_common(None, common)
