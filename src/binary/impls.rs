@@ -182,6 +182,28 @@ impl Unpack for Block {
     }
 }
 
+impl PackDynLen<V3> for Font {
+    const PACK_DYN_MIN: usize = Magic::PACK_LEN
+        + (Block::PACK_LEN + Info::PACK_DYN_MIN)
+        + (Block::PACK_LEN + Common::PACK_LEN)
+        + (Block::PACK_LEN)
+        + (Block::PACK_LEN);
+
+    fn dyn_len(&self) -> usize {
+        let info_len = PackDynLen::<V2>::dyn_len(&self.info);
+        let common_len = <Common as PackLen<V3>>::PACK_LEN;
+        let pages_len = <Vec<String> as PackDynLen<C>>::dyn_len(&self.pages);
+        let chars_len = <Vec<Char> as PackDynLen<V1>>::dyn_len(&self.chars);
+        let kernings_len = <Vec<Kerning> as PackDynLen<V1>>::dyn_len(&self.kernings);
+        Magic::PACK_LEN
+            + (Block::PACK_LEN + info_len)
+            + (Block::PACK_LEN + common_len)
+            + (Block::PACK_LEN + pages_len)
+            + (Block::PACK_LEN + chars_len)
+            + (if kernings_len != 0 { Block::PACK_LEN + kernings_len } else { 0 })
+    }
+}
+
 impl PackDynLen<V2> for Info {
     const PACK_DYN_MIN: usize = pack_len!(i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8);
 
@@ -347,6 +369,30 @@ impl Unpack<V3> for Common {
         } else {
             pack::underflow()
         }
+    }
+}
+
+impl PackDynLen<C> for Vec<String> {
+    const PACK_DYN_MIN: usize = 0;
+
+    fn dyn_len(&self) -> usize {
+        self.iter().map(PackDynLen::<C>::dyn_len).sum()
+    }
+}
+
+impl PackDynLen<V1> for Vec<Char> {
+    const PACK_DYN_MIN: usize = 0;
+
+    fn dyn_len(&self) -> usize {
+        <Char as PackLen<V1>>::PACK_LEN * self.len()
+    }
+}
+
+impl PackDynLen<V1> for Vec<Kerning> {
+    const PACK_DYN_MIN: usize = 0;
+
+    fn dyn_len(&self) -> usize {
+        <Kerning as PackLen<V1>>::PACK_LEN * self.len()
     }
 }
 

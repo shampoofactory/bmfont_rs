@@ -74,7 +74,6 @@ pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
 struct StoreAssist<'a> {
     dst: Vec<u8>,
     font: &'a Font,
-    dyn_len: DynLen,
     version: u8,
     strict: bool,
 }
@@ -82,8 +81,12 @@ struct StoreAssist<'a> {
 impl<'a> StoreAssist<'a> {
     fn v3(font: &'a Font, strict: bool) -> Self {
         // Initialize Vec with correct capacity to avoid reallocations/ slack.
-        let dyn_len = DynLen::v3(font);
-        Self { dst: Vec::with_capacity(dyn_len.sum()), font, dyn_len, version: 3, strict }
+        Self {
+            dst: Vec::with_capacity(<Font as PackDynLen<V3>>::dyn_len(font)),
+            font,
+            version: 3,
+            strict,
+        }
     }
 
     fn init(&mut self) -> crate::Result<()> {
@@ -96,7 +99,7 @@ impl<'a> StoreAssist<'a> {
         if self.strict {
             self.font.info.check_encoding()?;
         }
-        self.block(INFO, self.dyn_len.info as u32)?;
+        self.block(INFO, <Info as PackDynLen<V2>>::dyn_len(&self.font.info) as u32)?;
         match self.version {
             2 | 3 => PackDyn::<V2>::pack_dyn(&self.font.info, &mut self.dst)?,
             _ => unreachable!(),
@@ -105,7 +108,7 @@ impl<'a> StoreAssist<'a> {
     }
 
     fn common(&mut self) -> crate::Result<()> {
-        self.block(COMMON, self.dyn_len.common as u32)?;
+        self.block(COMMON, <Common as PackLen<V3>>::PACK_LEN as u32)?;
         match self.version {
             3 => Pack::<V3>::pack(&self.font.common, &mut self.dst)?,
             _ => unreachable!(),
@@ -115,7 +118,7 @@ impl<'a> StoreAssist<'a> {
 
     #[allow(clippy::manual_range_patterns)]
     fn pages(&mut self) -> crate::Result<()> {
-        self.block(PAGES, self.dyn_len.pages as u32)?;
+        self.block(PAGES, <Vec<String> as PackDynLen<C>>::dyn_len(&self.font.pages) as u32)?;
         match self.version {
             1 | 2 | 3 => {
                 let mut len = 0;
@@ -137,7 +140,7 @@ impl<'a> StoreAssist<'a> {
 
     #[allow(clippy::manual_range_patterns)]
     fn chars(&mut self) -> crate::Result<()> {
-        self.block(CHARS, self.dyn_len.chars as u32)?;
+        self.block(CHARS, <Vec<Char> as PackDynLen<V1>>::dyn_len(&self.font.chars) as u32)?;
         match self.version {
             1 | 2 | 3 => {
                 for char in self.font.chars.iter() {
@@ -151,7 +154,13 @@ impl<'a> StoreAssist<'a> {
 
     #[allow(clippy::manual_range_patterns)]
     fn kerning_pairs(&mut self) -> crate::Result<()> {
-        self.block(KERNING_PAIRS, self.dyn_len.kernings as u32)?;
+        if self.font.kernings.is_empty() {
+            return Ok(());
+        }
+        self.block(
+            KERNING_PAIRS,
+            <Vec<Kerning> as PackDynLen<V1>>::dyn_len(&self.font.kernings) as u32,
+        )?;
         match self.version {
             1 | 2 | 3 => {
                 for kerning in self.font.kernings.iter() {
@@ -167,30 +176,5 @@ impl<'a> StoreAssist<'a> {
         let block = Block::new(id, len);
         <Block as Pack>::pack(&block, &mut self.dst)?;
         Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-struct DynLen {
-    info: usize,
-    common: usize,
-    pages: usize,
-    chars: usize,
-    kernings: usize,
-}
-
-impl DynLen {
-    fn v3(font: &Font) -> Self {
-        Self {
-            info: PackDynLen::<V2>::dyn_len(&font.info),
-            common: <Common as PackLen<V3>>::PACK_LEN,
-            pages: font.pages.iter().map(PackDynLen::<C>::dyn_len).sum(),
-            chars: <Char as PackLen<V1>>::PACK_LEN * font.chars.len(),
-            kernings: <Kerning as PackLen<V1>>::PACK_LEN * font.kernings.len(),
-        }
-    }
-
-    fn sum(&self) -> usize {
-        self.info + self.common + self.pages + self.chars + self.kernings
     }
 }
