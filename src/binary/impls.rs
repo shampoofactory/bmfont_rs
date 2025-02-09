@@ -14,6 +14,7 @@
 
 use std::convert::TryFrom;
 
+use crate::binary::constants::{CHARS, COMMON, INFO, KERNING_PAIRS, PAGES};
 use crate::charset::Charset;
 use crate::font::*;
 use crate::parse::ParseError;
@@ -192,9 +193,9 @@ impl PackDynLen<V3> for Font {
     fn dyn_len(&self) -> usize {
         let info_len = PackDynLen::<V2>::dyn_len(&self.info);
         let common_len = <Common as PackLen<V3>>::PACK_LEN;
-        let pages_len = <Vec<String> as PackDynLen<C>>::dyn_len(&self.pages);
-        let chars_len = <Vec<Char> as PackDynLen<V1>>::dyn_len(&self.chars);
-        let kernings_len = <Vec<Kerning> as PackDynLen<V1>>::dyn_len(&self.kernings);
+        let pages_len = PackDynLen::<C>::dyn_len(&self.pages);
+        let chars_len = PackDynLen::<V1>::dyn_len(&self.chars);
+        let kernings_len = PackDynLen::<V1>::dyn_len(&self.kernings);
         Magic::PACK_LEN
             + (Block::PACK_LEN + info_len)
             + (Block::PACK_LEN + common_len)
@@ -204,12 +205,39 @@ impl PackDynLen<V3> for Font {
     }
 }
 
+impl PackDyn<V3> for Font {
+    fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        let dyn_len = PackDynLen::<V3>::dyn_len(self);
+        // Magic V3
+        Magic::new(3).pack(dst)?;
+        // Info V2
+        Block::new(INFO, PackDynLen::<V2>::dyn_len(&self.info) as u32).pack(dst)?;
+        PackDyn::<V2>::pack_dyn(&self.info, dst)?;
+        // Common V3
+        Block::new(COMMON, <Common as PackLen<V3>>::PACK_LEN as u32).pack(dst)?;
+        Pack::<V3>::pack(&self.common, dst)?;
+        // Pages C
+        Block::new(PAGES, PackDynLen::<C>::dyn_len(&self.pages) as u32).pack(dst)?;
+        PackDyn::<C>::pack_dyn(&self.pages, dst)?;
+        // Chars V1
+        Block::new(CHARS, PackDynLen::<V1>::dyn_len(&self.chars) as u32).pack(dst)?;
+        PackDyn::<V1>::pack_dyn(&self.chars, dst)?;
+        // Kernings V1 optional
+        if !self.kernings.is_empty() {
+            Block::new(KERNING_PAIRS, PackDynLen::<V1>::dyn_len(&self.kernings) as u32)
+                .pack(dst)?;
+            PackDyn::<V1>::pack_dyn(&self.kernings, dst)?;
+        }
+        Ok(dyn_len)
+    }
+}
+
 impl PackDynLen<V2> for Info {
     const PACK_DYN_MIN: usize = pack_len!(i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8);
 
     #[inline(always)]
     fn dyn_len(&self) -> usize {
-        <Info as PackDynLen<V2>>::PACK_DYN_MIN + <String as PackDynLen<C>>::dyn_len(&self.face)
+        <Info as PackDynLen<V2>>::PACK_DYN_MIN + PackDynLen::<C>::dyn_len(&self.face)
     }
 }
 
@@ -278,7 +306,7 @@ impl UnpackDyn<V2> for Info {
         {
             let dyn_min = <Self as PackDynLen<V2>>::PACK_DYN_MIN;
             let src = &src[dyn_min..];
-            let (face, face_len) = <String as UnpackDyn<C>>::unpack_dyn(src)?;
+            let (face, face_len) = UnpackDyn::<C>::unpack_dyn(src)?;
             let padding = Padding::new(padding_up, padding_right, padding_down, padding_left);
             let spacing = Spacing::new(spacing_horiz, spacing_vert);
             let bits = BitField(bits);
@@ -380,6 +408,27 @@ impl PackDynLen<C> for Vec<String> {
     }
 }
 
+impl PackDyn<C> for Vec<String> {
+    fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        let mut dyn_len = 0;
+        for s in self.iter() {
+            dyn_len += PackDyn::<C>::pack_dyn(&s.as_str(), dst)?;
+        }
+        Ok(dyn_len)
+    }
+}
+
+impl UnpackDyn<C> for Vec<String> {
+    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+        let mut dst = Vec::default();
+        <String as UnpackDyn<C>>::unpack_dyn_take_all(src, |file| {
+            dst.push(file);
+            Ok(())
+        })?;
+        Ok((dst, src.len()))
+    }
+}
+
 impl PackDynLen<V1> for Vec<Char> {
     const PACK_DYN_MIN: usize = 0;
 
@@ -388,11 +437,29 @@ impl PackDynLen<V1> for Vec<Char> {
     }
 }
 
+impl PackDyn<V1> for Vec<Char> {
+    fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        for char in self.iter() {
+            Pack::<V1>::pack(char, dst)?;
+        }
+        Ok(<Char as PackLen<V1>>::PACK_LEN * self.len())
+    }
+}
+
 impl PackDynLen<V1> for Vec<Kerning> {
     const PACK_DYN_MIN: usize = 0;
 
     fn dyn_len(&self) -> usize {
         <Kerning as PackLen<V1>>::PACK_LEN * self.len()
+    }
+}
+
+impl PackDyn<V1> for Vec<Kerning> {
+    fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
+        for kerning in self.iter() {
+            Pack::<V1>::pack(kerning, dst)?;
+        }
+        Ok(<Kerning as PackLen<V1>>::PACK_LEN * self.len())
     }
 }
 
@@ -637,6 +704,7 @@ mod tests {
                     let mut dst = Vec::default();
                     let pack_len = PackDyn::<$t>::pack_dyn($src, &mut dst)?;
                     assert_eq!(dst.len(), pack_len);
+                    assert_eq!(pack_len, PackDynLen::<$t>::dyn_len($src));
                     assert_eq!(dst, $dst);
                     Ok(())
                 }
@@ -687,7 +755,20 @@ mod tests {
             0x41, 0x72, 0x69, 0x61, 0x6C, 0x00, // fontName
         ]
     );
-
+    test_pack_dyn!(
+        vec_string_c,
+        Vec<String>,
+        C,
+        &vec!["test".to_owned()],
+        &[0x74, 0x65, 0x73, 0x74, 0x00]
+    );
+    test_pack_dyn!(
+        vec_string_c_3,
+        Vec<String>,
+        C,
+        &vec!["abc".to_owned(), "de".to_owned(), "f".to_owned()],
+        &[0x61, 0x62, 0x63, 0x00, 0x64, 0x65, 0x00, 0x66, 0x00]
+    );
     test_pack_dyn!(string_c, String, C, &"test", &[0x74, 0x65, 0x73, 0x74, 0x00]);
     test_pack_dyn!(string_c_null, String, C, &"", &[0]);
 }
