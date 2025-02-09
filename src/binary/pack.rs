@@ -11,7 +11,7 @@ pub trait PackLen<T = ()>: Sized {
 }
 
 pub trait Pack<T = ()>: PackLen<T> {
-    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<()>;
+    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<usize>;
 }
 
 pub trait Unpack<T = ()>: PackLen<T> + Sized {

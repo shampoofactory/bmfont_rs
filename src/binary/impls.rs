@@ -135,9 +135,9 @@ impl PackLen for Magic {
 }
 
 impl Pack for Magic {
-    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<()> {
+    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
         pack!(dst, &self.0);
-        Ok(())
+        Ok(Self::PACK_LEN)
     }
 }
 
@@ -165,9 +165,9 @@ impl PackLen for Block {
 }
 
 impl Pack for Block {
-    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<()> {
+    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
         pack!(dst, &self.id, &self.len);
-        Ok(())
+        Ok(Self::PACK_LEN)
     }
 }
 
@@ -339,7 +339,7 @@ impl PackLen<V3> for Common {
 }
 
 impl Pack<V3> for Common {
-    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<()> {
+    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
         let mut bits = BitField(0);
         bits.set(PACKED, self.packed);
         pack!(
@@ -355,7 +355,7 @@ impl Pack<V3> for Common {
             &(self.green_chnl as u8),
             &(self.blue_chnl as u8)
         );
-        Ok(())
+        Ok(Self::PACK_LEN)
     }
 }
 
@@ -462,7 +462,7 @@ impl PackLen<V1> for Char {
 }
 
 impl Pack<V1> for Char {
-    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<()> {
+    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
         pack!(
             dst,
             &self.id,
@@ -476,7 +476,7 @@ impl Pack<V1> for Char {
             &self.page,
             &u8::from(self.chnl)
         );
-        Ok(())
+        Ok(Self::PACK_LEN)
     }
 }
 
@@ -505,9 +505,9 @@ impl PackLen<V1> for Kerning {
 }
 
 impl Pack<V1> for Kerning {
-    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<()> {
+    fn pack(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
         pack!(dst, &self.first, &self.second, &self.amount);
-        Ok(())
+        Ok(Self::PACK_LEN)
     }
 }
 
