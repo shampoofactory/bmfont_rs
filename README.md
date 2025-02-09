@@ -163,6 +163,16 @@ Execute from the project root with:
 cargo run --example xml --features xml
 ```
 
+## Tests
+
+This crate is equipped numerous tests.
+
+Execute from the project root with:
+
+```
+cargo test --features "json xml"
+```
+
 ## BMFont
 
 The BMFont homepage is [here](http://www.angelcode.com/products/bmfont/). The site includes
