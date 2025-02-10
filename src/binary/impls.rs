@@ -226,6 +226,83 @@ impl PackDyn<V3> for Font {
     }
 }
 
+impl UnpackDyn<V3> for Font {
+    fn unpack_dyn(mut src: &[u8]) -> crate::Result<(Self, usize)> {
+        let version = Magic::unpack_take(&mut src)?.version()?;
+        if version != 3 {
+            return Err(crate::Error::UnsupportedBinaryVersion { version });
+        }
+        let mut dyn_len = Magic::PACK_LEN;
+        let mut info: Option<Info> = None;
+        let mut common: Option<Common> = None;
+        let mut pages: Option<Vec<String>> = None;
+        let mut chars: Option<Vec<Char>> = None;
+        let mut kernings: Option<Vec<Kerning>> = None;
+        while !src.is_empty() {
+            let Block { id, len } = Block::unpack_take(&mut src)?;
+            if len as usize > src.len() {
+                return pack::underflow();
+            }
+            let (block, overflow) = src.split_at(len as usize);
+            src = overflow;
+            match id {
+                INFO => {
+                    if info.is_some() {
+                        return Err(crate::Error::DuplicateInfoBlock { line: None });
+                    } else {
+                        info = Some(<Info as UnpackDyn<V2>>::unpack_dyn(block)?.0);
+                    }
+                }
+                COMMON => {
+                    if common.is_some() {
+                        return Err(crate::Error::DuplicateCommonBlock { line: None });
+                    } else {
+                        common = Some(<Common as Unpack<V3>>::unpack(block)?);
+                    }
+                }
+                PAGES => {
+                    let values = <Vec<String> as UnpackDyn<C>>::unpack_dyn(block)?.0;
+                    pages = Some(match pages {
+                        Some(mut vec) => {
+                            vec.extend_from_slice(&values);
+                            vec
+                        }
+                        None => values,
+                    });
+                }
+                CHARS => {
+                    let values = <Vec<Char> as UnpackDyn<V1>>::unpack_dyn(block)?.0;
+                    chars = Some(match chars {
+                        Some(mut vec) => {
+                            vec.extend_from_slice(&values);
+                            vec
+                        }
+                        None => values,
+                    });
+                }
+                KERNING_PAIRS => {
+                    let values = <Vec<Kerning> as UnpackDyn<V1>>::unpack_dyn(block)?.0;
+                    kernings = Some(match kernings {
+                        Some(mut vec) => {
+                            vec.extend_from_slice(&values);
+                            vec
+                        }
+                        None => values,
+                    });
+                }
+                id => return Err(crate::Error::InvalidBinaryBlock { id }),
+            }
+            dyn_len += Block::PACK_LEN + len as usize;
+        }
+        let info = info.take().ok_or(crate::Error::NoInfoBlock)?;
+        let common = common.take().ok_or(crate::Error::NoCommonBlock)?;
+        let pages = pages.unwrap_or_default();
+        let chars = chars.unwrap_or_default();
+        let kernings = kernings.unwrap_or_default();
+        Ok((Font { info, common, pages, chars, kernings }, dyn_len))
+    }
+}
+
 impl PackDynLen<V2> for Info {
     const PACK_DYN_MIN: usize = pack_len!(i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8);
 
@@ -441,6 +518,17 @@ impl PackDyn<V1> for Vec<Char> {
     }
 }
 
+impl UnpackDyn<V1> for Vec<Char> {
+    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+        let mut dst = Vec::default();
+        <Char as Unpack<V1>>::unpack_take_all(src, |file| {
+            dst.push(file);
+            Ok(())
+        })?;
+        Ok((dst, src.len()))
+    }
+}
+
 impl PackDynLen<V1> for Vec<Kerning> {
     const PACK_DYN_MIN: usize = 0;
 
@@ -456,6 +544,17 @@ impl PackDyn<V1> for Vec<Kerning> {
             Pack::<V1>::pack(kerning, dst)?;
         }
         Ok(dst.len() - mark)
+    }
+}
+
+impl UnpackDyn<V1> for Vec<Kerning> {
+    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+        let mut dst = Vec::default();
+        <Kerning as Unpack<V1>>::unpack_take_all(src, |file| {
+            dst.push(file);
+            Ok(())
+        })?;
+        Ok((dst, src.len()))
     }
 }
 
