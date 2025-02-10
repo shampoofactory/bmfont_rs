@@ -15,25 +15,25 @@ pub trait Pack<T = ()>: PackLen<T> {
 }
 
 pub trait Unpack<T = ()>: PackLen<T> + Sized {
-    fn unpack(src: &[u8]) -> crate::Result<Self>;
+    fn unpack_next(src: &mut &[u8]) -> crate::Result<Self>;
 
     #[inline(always)]
-    fn unpack_take(src: &mut &[u8]) -> crate::Result<Self> {
-        if src.len() < Self::PACK_LEN {
-            return underflow();
+    fn unpack(src: &mut &[u8]) -> crate::Result<Self> {
+        let obj = Self::unpack_next(src)?;
+        if src.is_empty() {
+            Ok(obj)
+        } else {
+            overflow()
         }
-        let (obj, overflow) = src.split_at(Self::PACK_LEN);
-        *src = overflow;
-        Self::unpack(obj)
     }
 
     #[inline(always)]
-    fn unpack_take_all<F>(mut src: &[u8], mut take: F) -> crate::Result<()>
+    fn unpack_all<F>(src: &mut &[u8], mut take: F) -> crate::Result<()>
     where
         F: FnMut(Self) -> crate::Result<()>,
     {
         while !src.is_empty() {
-            take(Self::unpack_take(&mut src)?)?;
+            take(Self::unpack_next(src)?)?;
         }
         Ok(())
     }
@@ -45,36 +45,17 @@ pub trait PackDynLen<T = ()>: Sized {
     fn dyn_len(&self) -> usize;
 }
 
-impl<T: PackLen> PackDynLen<T> for Vec<T> {
-    const PACK_DYN_MIN: usize = 0;
-
-    fn dyn_len(&self) -> usize {
-        T::PACK_LEN * self.len()
-    }
-}
-
 pub trait PackDyn<T = ()>: PackDynLen<T> {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize>;
 }
 
-impl<T: Pack> PackDyn<T> for Vec<T> {
-    fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
-        let mark = dst.len();
-        for t in self {
-            t.pack(dst)?;
-        }
-        Ok(dst.len() - mark)
-    }
-}
-
 pub trait UnpackDyn<T = ()>: PackDynLen<T> + Sized {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)>;
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self>;
 
     #[inline(always)]
-    fn unpack_dyn_take(src: &mut &[u8]) -> crate::Result<Self> {
-        let (obj, obj_len) = Self::unpack_dyn(src)?;
-        if obj_len <= src.len() {
-            *src = &src[obj_len..];
+    fn unpack_dyn(src: &mut &[u8]) -> crate::Result<Self> {
+        let obj = Self::unpack_dyn_next(src)?;
+        if src.is_empty() {
             Ok(obj)
         } else {
             overflow()
@@ -82,35 +63,14 @@ pub trait UnpackDyn<T = ()>: PackDynLen<T> + Sized {
     }
 
     #[inline(always)]
-    fn unpack_dyn_take_all<F>(mut src: &[u8], mut take: F) -> crate::Result<()>
+    fn unpack_dyn_all<F>(src: &mut &[u8], mut take: F) -> crate::Result<()>
     where
         F: FnMut(Self) -> crate::Result<()>,
     {
         while !src.is_empty() {
-            take(Self::unpack_dyn_take(&mut src)?)?;
+            take(Self::unpack_dyn_next(src)?)?;
         }
         Ok(())
-    }
-
-    #[inline(always)]
-    fn unpack_dyn_tight(src: &[u8]) -> crate::Result<Self> {
-        let (obj, obj_len) = Self::unpack_dyn(src)?;
-        if obj_len == src.len() {
-            Ok(obj)
-        } else {
-            overflow()
-        }
-    }
-}
-
-impl<T: Unpack> UnpackDyn<T> for Vec<T> {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
-        let mut dst = Vec::default();
-        T::unpack_take_all(src, |t| {
-            dst.push(t);
-            Ok(())
-        })?;
-        Ok((dst, src.len()))
     }
 }
 

@@ -68,28 +68,25 @@ macro_rules! pack {
 }
 
 macro_rules! unpack {
+    // $src: &mut [u8]
     ($src:expr, $($u:ty),*) => {{
     #[allow(unused_assignments)]
     {
         use std::mem::size_of;
 
-        let src: &[u8] = $src;
         let mut len = 0;
         $(
             len += size_of::<$u>();
         )*
-        if src.len() < len {
+        if $src.len() < len {
             pack::underflow()
-        } else if src.len() > len {
-            pack::overflow()
         } else {
-            let mut off = 0;
             Ok((
                     $({
                         let mut bytes = [0u8; size_of::<$u>()];
-                        let end = off + size_of::<$u>();
-                        bytes.as_mut().copy_from_slice(&src[off..end]);
-                        off = end;
+                        let (obj, overflow) = $src.split_at(size_of::<$u>());
+                        bytes.as_mut().copy_from_slice(obj);
+                        *$src = overflow;
                         <$u>::from_le_bytes(bytes)
                     },)*
                 ))
@@ -142,7 +139,7 @@ impl Pack for Magic {
 }
 
 impl Unpack for Magic {
-    fn unpack(src: &[u8]) -> crate::Result<Self> {
+    fn unpack_next(src: &mut &[u8]) -> crate::Result<Self> {
         unpack!(src, u32).map(|(magic,)| Self(magic))
     }
 }
@@ -172,7 +169,7 @@ impl Pack for Block {
 }
 
 impl Unpack for Block {
-    fn unpack(src: &[u8]) -> crate::Result<Self> {
+    fn unpack_next(src: &mut &[u8]) -> crate::Result<Self> {
         unpack!(src, u8, u32).map(|(id, len)| Self { id, len })
     }
 }
@@ -227,41 +224,40 @@ impl PackDyn<V3> for Font {
 }
 
 impl UnpackDyn<V3> for Font {
-    fn unpack_dyn(mut src: &[u8]) -> crate::Result<(Self, usize)> {
-        let version = Magic::unpack_take(&mut src)?.version()?;
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self> {
+        let version = Magic::unpack_next(src)?.version()?;
         if version != 3 {
             return Err(crate::Error::UnsupportedBinaryVersion { version });
         }
-        let mut dyn_len = Magic::PACK_LEN;
         let mut info: Option<Info> = None;
         let mut common: Option<Common> = None;
         let mut pages: Option<Vec<String>> = None;
         let mut chars: Option<Vec<Char>> = None;
         let mut kernings: Option<Vec<Kerning>> = None;
         while !src.is_empty() {
-            let Block { id, len } = Block::unpack_take(&mut src)?;
+            let Block { id, len } = Block::unpack_next(src)?;
             if len as usize > src.len() {
                 return pack::underflow();
             }
-            let (block, overflow) = src.split_at(len as usize);
-            src = overflow;
+            let (mut block, overflow) = src.split_at(len as usize);
+            *src = overflow;
             match id {
                 INFO => {
                     if info.is_some() {
                         return Err(crate::Error::DuplicateInfoBlock { line: None });
                     } else {
-                        info = Some(<Info as UnpackDyn<V2>>::unpack_dyn(block)?.0);
+                        info = Some(<Info as UnpackDyn<V2>>::unpack_dyn(&mut block)?);
                     }
                 }
                 COMMON => {
                     if common.is_some() {
                         return Err(crate::Error::DuplicateCommonBlock { line: None });
                     } else {
-                        common = Some(<Common as Unpack<V3>>::unpack(block)?);
+                        common = Some(<Common as Unpack<V3>>::unpack(&mut block)?);
                     }
                 }
                 PAGES => {
-                    let values = <Vec<String> as UnpackDyn<C>>::unpack_dyn(block)?.0;
+                    let values = <Vec<String> as UnpackDyn<C>>::unpack_dyn(&mut block)?;
                     pages = Some(match pages {
                         Some(mut vec) => {
                             vec.extend_from_slice(&values);
@@ -271,7 +267,7 @@ impl UnpackDyn<V3> for Font {
                     });
                 }
                 CHARS => {
-                    let values = <Vec<Char> as UnpackDyn<V1>>::unpack_dyn(block)?.0;
+                    let values = <Vec<Char> as UnpackDyn<V1>>::unpack_dyn(&mut block)?;
                     chars = Some(match chars {
                         Some(mut vec) => {
                             vec.extend_from_slice(&values);
@@ -281,7 +277,7 @@ impl UnpackDyn<V3> for Font {
                     });
                 }
                 KERNING_PAIRS => {
-                    let values = <Vec<Kerning> as UnpackDyn<V1>>::unpack_dyn(block)?.0;
+                    let values = <Vec<Kerning> as UnpackDyn<V1>>::unpack_dyn(&mut block)?;
                     kernings = Some(match kernings {
                         Some(mut vec) => {
                             vec.extend_from_slice(&values);
@@ -292,14 +288,13 @@ impl UnpackDyn<V3> for Font {
                 }
                 id => return Err(crate::Error::InvalidBinaryBlock { id }),
             }
-            dyn_len += Block::PACK_LEN + len as usize;
         }
         let info = info.take().ok_or(crate::Error::NoInfoBlock)?;
         let common = common.take().ok_or(crate::Error::NoCommonBlock)?;
         let pages = pages.unwrap_or_default();
         let chars = chars.unwrap_or_default();
         let kernings = kernings.unwrap_or_default();
-        Ok((Font { info, common, pages, chars, kernings }, dyn_len))
+        Ok(Font { info, common, pages, chars, kernings })
     }
 }
 
@@ -359,9 +354,8 @@ impl PackDyn<V2> for Info {
 }
 
 impl UnpackDyn<V2> for Info {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
-        let dyn_min = <Self as PackDynLen<V2>>::PACK_DYN_MIN;
-        match unpack!(&src[..dyn_min], i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8) {
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self> {
+        match unpack!(src, i16, u8, u8, u16, u8, u8, u8, u8, u8, u8, u8, u8) {
             Ok((
                 size,
                 bits,
@@ -376,8 +370,7 @@ impl UnpackDyn<V2> for Info {
                 spacing_vert,
                 outline,
             )) => {
-                let src = &src[dyn_min..];
-                let (face, face_len) = UnpackDyn::<C>::unpack_dyn(src)?;
+                let face = UnpackDyn::<C>::unpack_dyn(src)?;
                 let padding = Padding::new(padding_up, padding_right, padding_down, padding_left);
                 let spacing = Spacing::new(spacing_horiz, spacing_vert);
                 let bits = BitField(bits);
@@ -388,23 +381,20 @@ impl UnpackDyn<V2> for Info {
                 let _fixed_height = bits.get(FIXED_HEIGHT);
                 let charset =
                     if unicode && charset == 0 { Charset::Null } else { Charset::Tagged(charset) };
-                Ok((
-                    Self {
-                        face,
-                        size,
-                        bold,
-                        italic,
-                        charset,
-                        unicode,
-                        stretch_h,
-                        smooth,
-                        aa,
-                        padding,
-                        spacing,
-                        outline,
-                    },
-                    dyn_min + face_len,
-                ))
+                Ok(Self {
+                    face,
+                    size,
+                    bold,
+                    italic,
+                    charset,
+                    unicode,
+                    stretch_h,
+                    smooth,
+                    aa,
+                    padding,
+                    spacing,
+                    outline,
+                })
             }
             Err(err) => Err(err),
         }
@@ -437,7 +427,7 @@ impl Pack<V3> for Common {
 }
 
 impl Unpack<V3> for Common {
-    fn unpack(src: &[u8]) -> crate::Result<Self> {
+    fn unpack_next(src: &mut &[u8]) -> crate::Result<Self> {
         match unpack!(src, u16, u16, u16, u16, u16, u8, u8, u8, u8, u8) {
             Ok((
                 line_height,
@@ -490,13 +480,13 @@ impl PackDyn<C> for Vec<String> {
 }
 
 impl UnpackDyn<C> for Vec<String> {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self> {
         let mut dst = Vec::default();
-        <String as UnpackDyn<C>>::unpack_dyn_take_all(src, |file| {
+        <String as UnpackDyn<C>>::unpack_dyn_all(src, |file| {
             dst.push(file);
             Ok(())
         })?;
-        Ok((dst, src.len()))
+        Ok(dst)
     }
 }
 
@@ -519,13 +509,13 @@ impl PackDyn<V1> for Vec<Char> {
 }
 
 impl UnpackDyn<V1> for Vec<Char> {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self> {
         let mut dst = Vec::default();
-        <Char as Unpack<V1>>::unpack_take_all(src, |file| {
+        <Char as Unpack<V1>>::unpack_all(src, |file| {
             dst.push(file);
             Ok(())
         })?;
-        Ok((dst, src.len()))
+        Ok(dst)
     }
 }
 
@@ -548,13 +538,13 @@ impl PackDyn<V1> for Vec<Kerning> {
 }
 
 impl UnpackDyn<V1> for Vec<Kerning> {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self> {
         let mut dst = Vec::default();
-        <Kerning as Unpack<V1>>::unpack_take_all(src, |file| {
+        <Kerning as Unpack<V1>>::unpack_all(src, |file| {
             dst.push(file);
             Ok(())
         })?;
-        Ok((dst, src.len()))
+        Ok(dst)
     }
 }
 
@@ -582,7 +572,7 @@ impl Pack<V1> for Char {
 }
 
 impl Unpack<V1> for Char {
-    fn unpack(src: &[u8]) -> crate::Result<Self> {
+    fn unpack_next(src: &mut &[u8]) -> crate::Result<Self> {
         match unpack!(src, u32, u16, u16, u16, u16, i16, i16, i16, u8, u8) {
             Ok((id, x, y, width, height, xoffset, yoffset, xadvance, page, chnl)) => Ok(Self {
                 id,
@@ -613,7 +603,7 @@ impl Pack<V1> for Kerning {
 }
 
 impl Unpack<V1> for Kerning {
-    fn unpack(src: &[u8]) -> crate::Result<Self> {
+    fn unpack_next(src: &mut &[u8]) -> crate::Result<Self> {
         match unpack!(src, u32, u32, i16) {
             Ok((first, second, amount)) => Ok(Self { first, second, amount }),
             Err(err) => Err(err),
@@ -650,12 +640,14 @@ impl PackDynLen<C> for String {
 }
 
 impl UnpackDyn<C> for String {
-    fn unpack_dyn(src: &[u8]) -> crate::Result<(Self, usize)> {
+    fn unpack_dyn_next(src: &mut &[u8]) -> crate::Result<Self> {
         let mut i = 0;
         while i < src.len() {
             if src[i] == 0 {
-                let string = utf8_string((&src[..i]).into())?;
-                return Ok((string, i + 1));
+                let (obj, overflow) = src.split_at(i);
+                let string = utf8_string((obj).into())?;
+                *src = &overflow[1..];
+                return Ok(string);
             }
             i += 1;
         }
@@ -707,18 +699,21 @@ mod tests {
                 use super::*;
 
                 #[test]
-                fn pack_dyn() -> crate::Result<()> {
+                fn pack() -> crate::Result<()> {
                     let mut dst = Vec::default();
-                    Pack::<$t>::pack($src, &mut dst)?;
+                    let pack_len = Pack::<$t>::pack($src, &mut dst)?;
+                    assert_eq!($dst.len(), pack_len);
+                    assert_eq!(pack_len, <$obj as PackLen<$t>>::PACK_LEN);
                     assert_eq!(dst, $dst);
                     Ok(())
                 }
 
                 #[test]
-                fn unpack_dyn() -> crate::Result<()> {
-                    let dst: &[u8] = $dst;
+                fn unpack() -> crate::Result<()> {
+                    let dst = &mut $dst.as_slice();
                     let obj = <$obj as Unpack<$t>>::unpack(dst)?;
                     assert_eq!(&obj, $src);
+                    assert!(dst.is_empty());
                     Ok(())
                 }
             }
@@ -796,16 +791,16 @@ mod tests {
                     let mut dst = Vec::default();
                     let pack_len = PackDyn::<$t>::pack_dyn($src, &mut dst)?;
                     assert_eq!(dst.len(), pack_len);
-                    assert_eq!(pack_len, PackDynLen::<$t>::dyn_len($src));
+                    assert_eq!(PackDynLen::<$t>::dyn_len($src), pack_len);
                     assert_eq!(dst, $dst);
                     Ok(())
                 }
 
                 #[test]
                 fn unpack_dyn() -> crate::Result<()> {
-                    let dst: &[u8] = $dst;
-                    let (obj, obj_len) = <$obj as UnpackDyn<$t>>::unpack_dyn(dst)?;
-                    assert_eq!(obj_len, dst.len());
+                    let dst = &mut $dst.as_slice();
+                    let obj = <$obj as UnpackDyn<$t>>::unpack_dyn(dst)?;
+                    assert!(dst.is_empty());
                     assert_eq!(&obj, $src);
                     Ok(())
                 }
