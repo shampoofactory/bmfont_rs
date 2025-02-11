@@ -110,16 +110,6 @@ fn binary_multi_page() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn binary_incongruent_page_name_lengths() -> Result<(), Box<dyn Error>> {
-    let mut small = small();
-    small.common.pages = 2;
-    small.pages.push("sheet_1.png".to_owned());
-    let mut vec = Vec::default();
-    assert!(binary::to_writer(&mut vec, &small).is_err());
-    Ok(())
-}
-
-#[test]
 fn text_small_from_bytes() -> Result<(), Box<dyn Error>> {
     let src = include_bytes!("../../data/ok/small.txt");
     assert_eq!(text::from_bytes(src)?, small());
@@ -159,22 +149,6 @@ fn text_small_to_writer() -> Result<(), Box<dyn Error>> {
     let mut vec = Vec::default();
     text::to_writer(&mut vec, &small())?;
     assert_eq!(text::from_bytes(&vec)?, small());
-    Ok(())
-}
-
-#[test]
-fn text_small_invalid_face_string() -> Result<(), Box<dyn Error>> {
-    let mut small = small();
-    small.info.face = "\x00".to_owned();
-    assert!(text::to_string(&small).is_err());
-    Ok(())
-}
-
-#[test]
-fn text_small_invalid_page_string() -> Result<(), Box<dyn Error>> {
-    let mut small = small();
-    small.pages[0] = "\x00".to_owned();
-    assert!(text::to_string(&small).is_err());
     Ok(())
 }
 
@@ -236,26 +210,6 @@ fn xml_small_string_escape() -> Result<(), Box<dyn Error>> {
     small.pages[0] = "<\"&'☺'&\">.png".to_owned();
     xml::to_writer(&mut vec, &small)?;
     assert_eq!(xml::from_bytes(&vec)?, small);
-    Ok(())
-}
-
-#[cfg(feature = "xml")]
-#[test]
-fn xml_small_invalid_face_string() -> Result<(), Box<dyn Error>> {
-    let mut vec = Vec::default();
-    let mut small = small();
-    small.info.face = "\x00".to_owned();
-    assert!(xml::to_writer(&mut vec, &small).is_err());
-    Ok(())
-}
-
-#[cfg(feature = "xml")]
-#[test]
-fn xml_small_invalid_page_string() -> Result<(), Box<dyn Error>> {
-    let mut vec = Vec::default();
-    let mut small = small();
-    small.pages[0] = "\x00".to_owned();
-    assert!(xml::to_writer(&mut vec, &small).is_err());
     Ok(())
 }
 
@@ -398,6 +352,60 @@ macro_rules! err {
         }
     };
 }
+
+err!(
+    binary_incongruent_page_name_lengths,
+    {
+        let mut small = small();
+        small.common.pages = 2;
+        small.pages.push("sheet_1.png".to_owned());
+        let mut vec = Vec::default();
+        binary::to_writer(&mut vec, &small)
+    },
+    crate::Error::IncongruentPageNameLen { .. }
+);
+
+err!(
+    text_invalid_face_string,
+    {
+        let mut small = small();
+        small.info.face = "\x00".to_owned();
+        text::to_string(&small)
+    },
+    crate::Error::Io { .. }
+);
+
+err!(
+    text_invalid_page_string,
+    {
+        let mut small = small();
+        small.pages[0] = "\x00".to_owned();
+        text::to_string(&small)
+    },
+    crate::Error::Io { .. }
+);
+
+#[cfg(feature = "xml")]
+err!(
+    xml_invalid_face_string,
+    {
+        let mut small = small();
+        small.info.face = "\x00".to_owned();
+        xml::to_string(&small)
+    },
+    crate::Error::Io { .. }
+);
+
+#[cfg(feature = "xml")]
+err!(
+    xml_invalid_page_string,
+    {
+        let mut small = small();
+        small.pages[0] = "\x00".to_owned();
+        xml::to_string(&small)
+    },
+    crate::Error::Io { .. }
+);
 
 err!(
     text_duplicate_key,
