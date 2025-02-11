@@ -533,7 +533,7 @@ impl Parse for Packing {
 ///
 ///
 /// Internally the structure is represented by a byte bit field. The individual channel bits can
-/// bet queried and set as desired. Unless you know what you're doing, take care when setting bits
+/// be queried and set as desired. Unless you know what you're doing, take care when setting bits
 /// to avoid non-standard combinations.
 ///
 /// # Examples
