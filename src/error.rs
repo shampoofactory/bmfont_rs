@@ -181,6 +181,15 @@ pub enum Error {
         /// Binary version.
         version: u8,
     },
+    /// The specified entity cannot be encoded.
+    UnsupportedEncoding {
+        /// Line where the error occurred.
+        line: Option<usize>,
+        /// The entity that failed to encode.
+        entity: String,
+        /// The encoding error.
+        err: String,
+    },
     /// The value string contains characters that cannot be encoded.
     UnsupportedValueEncoding {
         /// Path/ location.
@@ -280,6 +289,9 @@ impl fmt::Display for Error {
             }
             Error::UnsupportedBinaryVersion { version } => {
                 write!(f, "unsupported version: {}", version)
+            }
+            Error::UnsupportedEncoding { line, entity, err } => {
+                write!(f, "{}: unsupported  encoding: {}: {}", format_line(line), entity, err)
             }
             Error::UnsupportedValueEncoding { path, value } => {
                 write!(f, "{}: unsupported value encoding: '{}'", path, value)

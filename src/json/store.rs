@@ -128,9 +128,12 @@ pub fn to_vec_pretty(font: &Font) -> crate::Result<Vec<u8>> {
 /// }
 /// ```
 pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> {
-    let json = serde_json::ser::to_string(&font).map_err(|e| {
-        crate::Error::UnsupportedValueEncoding { path: "json".to_owned(), value: e.to_string() }
-    })?;
+    let json =
+        serde_json::ser::to_string(&font).map_err(|e| crate::Error::UnsupportedEncoding {
+            line: None,
+            entity: "json".to_owned(),
+            err: e.to_string(),
+        })?;
     write!(writer, "{}", json).map_err(Into::into)
 }
 
@@ -159,7 +162,11 @@ pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> 
 /// ```
 pub fn to_writer_pretty<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> {
     let json = serde_json::ser::to_string_pretty(&font).map_err(|e| {
-        crate::Error::UnsupportedValueEncoding { path: "json".to_owned(), value: e.to_string() }
+        crate::Error::UnsupportedEncoding {
+            line: None,
+            entity: "json".to_owned(),
+            err: e.to_string(),
+        }
     })?;
     write!(writer, "{}", json).map_err(Into::into)
 }
