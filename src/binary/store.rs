@@ -59,20 +59,34 @@ pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> 
 /// }
 /// ```
 pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
-    check_page_name_lengths(&font.pages)?;
+    check_page_names(&font.pages)?;
+    check_value(&font.info.face)?;
     let dyn_len = PackDynLen::<V3>::dyn_len(font);
     let mut dst = Vec::with_capacity(dyn_len);
     PackDyn::<V3>::pack_dyn(font, &mut dst)?;
     Ok(dst)
 }
 
-fn check_page_name_lengths(pages: &[String]) -> crate::Result<()> {
+fn check_page_names(pages: &[String]) -> crate::Result<()> {
     let mut len = None;
     for page in pages {
         let page_len = page.len();
         if *len.get_or_insert(page_len) != page_len {
             return Err(crate::Error::IncongruentPageNameLen { line: None });
         }
+        check_value(page)?;
     }
     Ok(())
+}
+
+fn check_value(value: &str) -> crate::Result<&str> {
+    for c in value.chars() {
+        if c == '\x00' {
+            return Err(crate::Error::UnsupportedValueEncoding {
+                path: "binary".to_owned(),
+                value: value.to_owned(),
+            });
+        }
+    }
+    Ok(value)
 }

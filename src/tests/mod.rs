@@ -354,6 +354,28 @@ macro_rules! err {
 }
 
 err!(
+    binary_invalid_face_string,
+    {
+        let mut small = small();
+        small.info.face = "\x00".to_owned();
+        let mut vec = Vec::default();
+        binary::to_writer(&mut vec, &small)
+    },
+    crate::Error::UnsupportedValueEncoding { .. }
+);
+
+err!(
+    binary_invalid_page_string,
+    {
+        let mut small = small();
+        small.pages[0] = "\x00".to_owned();
+        let mut vec = Vec::default();
+        binary::to_writer(&mut vec, &small)
+    },
+    crate::Error::UnsupportedValueEncoding { .. }
+);
+
+err!(
     binary_incongruent_page_name_lengths,
     {
         let mut small = small();
