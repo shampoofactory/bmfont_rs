@@ -59,8 +59,20 @@ pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> 
 /// }
 /// ```
 pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
+    check_page_name_lengths(&font.pages)?;
     let dyn_len = PackDynLen::<V3>::dyn_len(font);
     let mut dst = Vec::with_capacity(dyn_len);
     PackDyn::<V3>::pack_dyn(font, &mut dst)?;
     Ok(dst)
+}
+
+fn check_page_name_lengths(pages: &[String]) -> crate::Result<()> {
+    let mut len = None;
+    for page in pages {
+        let page_len = page.len();
+        if *len.get_or_insert(page_len) != page_len {
+            return Err(crate::Error::IncongruentPageNameLen { line: None });
+        }
+    }
+    Ok(())
 }

@@ -38,7 +38,7 @@ pub fn from_str(src: &str) -> crate::Result<Font> {
 /// This function specifies Font import behavior, allowing us to import certain partially
 /// broken/ non-compliant BMFont files.
 pub fn from_str_ext(src: &str, settings: &LoadSettings) -> crate::Result<Font> {
-    FontBuilderXml::new(settings).load_str(src)?.build()
+    FontBuilderXml::default().load_str(src)?.build(settings)
 }
 
 /// Load XML format font.
@@ -119,17 +119,13 @@ pub fn from_reader_ext<R: io::Read>(mut reader: R, settings: &LoadSettings) -> c
     from_bytes_ext(&vec, settings)
 }
 
-#[derive(Debug)]
-pub struct FontBuilderXml<'a> {
-    builder: FontBuilder<'a>,
+#[derive(Debug, Default)]
+pub struct FontBuilderXml {
+    builder: FontBuilder,
 }
 
-impl<'a> FontBuilderXml<'a> {
-    pub fn new(settings: &'a LoadSettings) -> Self {
-        Self { builder: FontBuilder::new(settings) }
-    }
-
-    pub fn load_str(mut self, src: &str) -> crate::Result<FontBuilder<'a>> {
+impl FontBuilderXml {
+    pub fn load_str(mut self, src: &str) -> crate::Result<FontBuilder> {
         let document = xml::Document::parse(src).map_err(|e| crate::Error::Parse {
             line: None,
             entity: "font".to_owned(),

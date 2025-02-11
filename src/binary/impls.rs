@@ -11,10 +11,13 @@
 //! encoding has not changed. We delegate selection logic to the client.
 //! For example: `Kerning` has a `V1` encoding which is unchanged in `V2` and `V3`, we therefore
 //! define `V1` only; the client is aware of this and will select `V1` in all cases.
-
+//!
+//! Note. These methods have limited validation checks, they are primarily concerned with the
+//! packing and unpacking of data structures, not with the validity of their contents.
 use std::convert::TryFrom;
 
 use crate::binary::constants::{CHARS, COMMON, INFO, KERNING_PAIRS, PAGES};
+use crate::builder::FontProto;
 use crate::charset::Charset;
 use crate::font::*;
 use crate::parse::ParseError;
@@ -175,24 +178,21 @@ impl Unpack for Block {
 }
 
 impl PackDynLen<V3> for Font {
-    const PACK_DYN_MIN: usize = Magic::PACK_LEN
-        + (Block::PACK_LEN + Info::PACK_DYN_MIN)
-        + (Block::PACK_LEN + Common::PACK_LEN)
-        + (Block::PACK_LEN)
-        + (Block::PACK_LEN);
+    const PACK_DYN_MIN: usize =
+        Magic::PACK_LEN + Block::PACK_LEN * 4 + Info::PACK_DYN_MIN + Common::PACK_LEN;
 
     fn dyn_len(&self) -> usize {
-        let info_len = PackDynLen::<V2>::dyn_len(&self.info);
-        let common_len = <Common as PackLen<V3>>::PACK_LEN;
-        let pages_len = PackDynLen::<C>::dyn_len(&self.pages);
-        let chars_len = PackDynLen::<V1>::dyn_len(&self.chars);
-        let kernings_len = PackDynLen::<V1>::dyn_len(&self.kernings);
         Magic::PACK_LEN
-            + (Block::PACK_LEN + info_len)
-            + (Block::PACK_LEN + common_len)
-            + (Block::PACK_LEN + pages_len)
-            + (Block::PACK_LEN + chars_len)
-            + (if kernings_len != 0 { Block::PACK_LEN + kernings_len } else { 0 })
+            + <Common as PackLen<V3>>::PACK_LEN
+            + Block::PACK_LEN * 4
+            + PackDynLen::<V2>::dyn_len(&self.info)
+            + PackDynLen::<C>::dyn_len(&self.pages)
+            + PackDynLen::<V1>::dyn_len(&self.chars)
+            + (if !self.kernings.is_empty() {
+                Block::PACK_LEN + PackDynLen::<V1>::dyn_len(&self.kernings)
+            } else {
+                0
+            })
     }
 }
 
@@ -229,11 +229,7 @@ impl UnpackDyn<V3> for Font {
         if version != 3 {
             return Err(crate::Error::UnsupportedBinaryVersion { version });
         }
-        let mut info: Option<Info> = None;
-        let mut common: Option<Common> = None;
-        let mut pages: Option<Vec<String>> = None;
-        let mut chars: Option<Vec<Char>> = None;
-        let mut kernings: Option<Vec<Kerning>> = None;
+        let mut proto = FontProto::default();
         while !src.is_empty() {
             let Block { id, len } = Block::unpack_next(src)?;
             if len as usize > src.len() {
@@ -243,58 +239,24 @@ impl UnpackDyn<V3> for Font {
             *src = overflow;
             match id {
                 INFO => {
-                    if info.is_some() {
-                        return Err(crate::Error::DuplicateInfoBlock { line: None });
-                    } else {
-                        info = Some(<Info as UnpackDyn<V2>>::unpack_dyn(&mut block)?);
-                    }
+                    proto.set_info(None, <_ as UnpackDyn<V2>>::unpack_dyn(&mut block)?)?;
                 }
                 COMMON => {
-                    if common.is_some() {
-                        return Err(crate::Error::DuplicateCommonBlock { line: None });
-                    } else {
-                        common = Some(<Common as Unpack<V3>>::unpack(&mut block)?);
-                    }
+                    proto.set_common(None, <_ as Unpack<V3>>::unpack(&mut block)?)?;
                 }
                 PAGES => {
-                    let values = <Vec<String> as UnpackDyn<C>>::unpack_dyn(&mut block)?;
-                    pages = Some(match pages {
-                        Some(mut vec) => {
-                            vec.extend_from_slice(&values);
-                            vec
-                        }
-                        None => values,
-                    });
+                    proto.set_pages(None, <_ as UnpackDyn<C>>::unpack_dyn(&mut block)?)?;
                 }
                 CHARS => {
-                    let values = <Vec<Char> as UnpackDyn<V1>>::unpack_dyn(&mut block)?;
-                    chars = Some(match chars {
-                        Some(mut vec) => {
-                            vec.extend_from_slice(&values);
-                            vec
-                        }
-                        None => values,
-                    });
+                    proto.set_chars(None, <_ as UnpackDyn<V1>>::unpack_dyn(&mut block)?)?;
                 }
                 KERNING_PAIRS => {
-                    let values = <Vec<Kerning> as UnpackDyn<V1>>::unpack_dyn(&mut block)?;
-                    kernings = Some(match kernings {
-                        Some(mut vec) => {
-                            vec.extend_from_slice(&values);
-                            vec
-                        }
-                        None => values,
-                    });
+                    proto.set_kernings(None, <_ as UnpackDyn<V1>>::unpack_dyn(&mut block)?)?;
                 }
                 id => return Err(crate::Error::InvalidBinaryBlock { id }),
             }
         }
-        let info = info.take().ok_or(crate::Error::NoInfoBlock)?;
-        let common = common.take().ok_or(crate::Error::NoCommonBlock)?;
-        let pages = pages.unwrap_or_default();
-        let chars = chars.unwrap_or_default();
-        let kernings = kernings.unwrap_or_default();
-        Ok(Font { info, common, pages, chars, kernings })
+        proto.build_unchecked()
     }
 }
 

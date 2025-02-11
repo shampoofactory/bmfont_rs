@@ -17,9 +17,12 @@ Bugfixes:
 - medium file tests now use the correct files.
 
 Docs:
-- fix typos
-- fix doc hyperlink
+- fix typos.
+- fix doc hyperlink.
 
+Internal improvements:
+- further simplify builder mechanics.
+- further leverage packing traits.
 
 ## [0.2.1] 1 Feb 2025
 

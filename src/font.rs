@@ -301,6 +301,7 @@ impl Info {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn check_encoding(&self) -> crate::Result<()> {
         if self.unicode && self.charset != Charset::Null {
             return Err(crate::Error::InvalidBinaryEncoding {

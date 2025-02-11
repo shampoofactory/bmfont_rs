@@ -74,6 +74,20 @@ pub trait UnpackDyn<T = ()>: PackDynLen<T> + Sized {
     }
 }
 
+#[allow(dead_code)]
+pub fn opt_len<T, U: PackLen<T>>(option: &Option<U>) -> Option<usize> {
+    if option.is_some() {
+        Some(U::PACK_LEN)
+    } else {
+        None
+    }
+}
+
+#[allow(dead_code)]
+pub fn opt_dyn_len<T, U: PackDynLen<T>>(option: &Option<U>) -> Option<usize> {
+    option.as_ref().map(|u| u.dyn_len())
+}
+
 pub fn overflow<T>() -> crate::Result<T> {
     Err(crate::Error::Parse { line: None, entity: "buffer".to_owned(), err: "overflow".to_owned() })
 }

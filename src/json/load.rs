@@ -1,4 +1,4 @@
-use crate::builder::FontBuilder;
+use crate::builder::FontProto;
 use crate::font::Font;
 use crate::LoadSettings;
 
@@ -35,12 +35,14 @@ pub fn from_str(src: &str) -> crate::Result<Font> {
 /// This function specifies Font import behavior, allowing us to import certain partially
 /// broken/ non-compliant BMFont files.
 pub fn from_str_ext(src: &str, settings: &LoadSettings) -> crate::Result<Font> {
-    let font = serde_json::de::from_str(src).map_err(|e| crate::Error::Parse {
-        line: None,
-        entity: "json".to_owned(),
-        err: e.to_string(),
-    })?;
-    FontBuilder::with_font(font, settings).build()
+    let proto: FontProto = serde_json::de::from_str::<Font>(src)
+        .map_err(|e| crate::Error::Parse {
+            line: None,
+            entity: "json".to_owned(),
+            err: e.to_string(),
+        })?
+        .into();
+    proto.build(settings)
 }
 
 /// Load JSON format font.

@@ -110,6 +110,16 @@ fn binary_multi_page() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn binary_incongruent_page_name_lengths() -> Result<(), Box<dyn Error>> {
+    let mut small = small();
+    small.common.pages = 2;
+    small.pages.push("sheet_1.png".to_owned());
+    let mut vec = Vec::default();
+    assert!(binary::to_writer(&mut vec, &small).is_err());
+    Ok(())
+}
+
+#[test]
 fn text_small_from_bytes() -> Result<(), Box<dyn Error>> {
     let src = include_bytes!("../../data/ok/small.txt");
     assert_eq!(text::from_bytes(src)?, small());

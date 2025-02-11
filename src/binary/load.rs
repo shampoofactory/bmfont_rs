@@ -1,4 +1,4 @@
-use crate::builder::FontBuilder;
+use crate::builder::FontProto;
 use crate::{font::*, LoadSettings};
 
 use super::pack::UnpackDyn;
@@ -73,6 +73,6 @@ pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
 /// This function specifies Font import behavior, allowing us to import certain partially
 /// broken/ non-compliant BMFont files.
 pub fn from_bytes_ext(mut bytes: &[u8], settings: &LoadSettings) -> crate::Result<Font> {
-    let font = Font::unpack_dyn(&mut bytes)?;
-    FontBuilder::with_font(font, settings).build()
+    let proto: FontProto = Font::unpack_dyn(&mut bytes)?.into();
+    proto.build(settings)
 }

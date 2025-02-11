@@ -71,7 +71,7 @@ pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
 /// This function specifies Font import behavior, allowing us to import certain partially
 /// broken/ non-compliant BMFont files.
 pub fn from_bytes_ext(bytes: &[u8], settings: &LoadSettings) -> crate::Result<Font> {
-    FontBuilderText::new(settings).load_bytes(bytes)?.build()
+    FontBuilderText::default().load_bytes(bytes)?.build(settings)
 }
 
 /// Read text format font.
@@ -111,16 +111,13 @@ pub fn from_reader_ext<R: io::Read>(mut reader: R, settings: &LoadSettings) -> c
     from_bytes_ext(&vec, settings)
 }
 
-pub struct FontBuilderText<'a> {
-    builder: FontBuilder<'a>,
+#[derive(Debug, Default)]
+pub struct FontBuilderText {
+    builder: FontBuilder,
 }
 
-impl<'a> FontBuilderText<'a> {
-    pub fn new(settings: &'a LoadSettings) -> Self {
-        Self { builder: FontBuilder::new(settings) }
-    }
-
-    pub fn load_bytes(mut self, bytes: &[u8]) -> crate::Result<FontBuilder<'a>> {
+impl FontBuilderText {
+    pub fn load_bytes(mut self, bytes: &[u8]) -> crate::Result<FontBuilder> {
         let mut attributes = TaggedAttributes::from_bytes(bytes);
         while let Some(Tag { tag, line }) = attributes.next_tag()? {
             match tag {
