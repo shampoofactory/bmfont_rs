@@ -79,30 +79,30 @@ pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
 ///     Ok(())
 /// }
 /// ```
-pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> io::Result<()> {
+pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> {
     let mut escaper = Escaper::with_capacity(ESCAPER_CAPACITY);
     font.store(&mut writer, &mut escaper)
 }
 
 trait StoreXml {
-    fn store<W: io::Write>(&self, writer: W, escaper: &mut Escaper) -> io::Result<()>;
+    fn store<W: io::Write>(&self, writer: W, escaper: &mut Escaper) -> crate::Result<()>;
 }
 
 impl StoreXml for Font {
-    fn store<W: io::Write>(&self, mut writer: W, escaper: &mut Escaper) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, escaper: &mut Escaper) -> crate::Result<()> {
         writeln!(writer, "<?xml version=\"1.0\"?>")?;
         writeln!(writer, "<font>")?;
         self.info.store(&mut writer, escaper)?;
         self.common.store(&mut writer, escaper)?;
         writeln!(writer, "  <pages>")?;
-        self.pages.iter().enumerate().try_for_each(|(i, s)| {
+        for (i, page) in self.pages.iter().enumerate() {
             write!(
                 writer,
                 "    <page id=\"{}\" file=\"{}\" />",
                 i,
-                escaper.escape_value("page id", s)?
-            )
-        })?;
+                escaper.escape_value("page id", page)?
+            )?;
+        }
         writeln!(writer, "  </pages>")?;
         writeln!(writer, "  <chars count=\"{}\">", self.chars.len())?;
         self.chars.iter().try_for_each(|u| u.store(&mut writer, escaper))?;
@@ -116,7 +116,7 @@ impl StoreXml for Font {
 }
 
 impl StoreXml for Char {
-    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> crate::Result<()> {
         writeln!(
             writer,
             "    <char \
@@ -142,11 +142,12 @@ impl StoreXml for Char {
             self.page,
             u8::from(self.chnl)
         )
+        .map_err(Into::into)
     }
 }
 
 impl StoreXml for Common {
-    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> crate::Result<()> {
         writeln!(
             writer,
             "  <common \
@@ -172,11 +173,12 @@ impl StoreXml for Common {
             self.green_chnl as u8,
             self.blue_chnl as u8
         )
+        .map_err(Into::into)
     }
 }
 
 impl StoreXml for Info {
-    fn store<W: io::Write>(&self, mut writer: W, escaper: &mut Escaper) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, escaper: &mut Escaper) -> crate::Result<()> {
         writeln!(
             writer,
             "  <info \
@@ -210,16 +212,18 @@ impl StoreXml for Info {
             self.spacing.vertical,
             self.outline
         )
+        .map_err(Into::into)
     }
 }
 
 impl StoreXml for Kerning {
-    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W, _: &mut Escaper) -> crate::Result<()> {
         writeln!(
             writer,
             "    <kerning first=\"{}\" second=\"{}\" amount=\"{}\" />",
             self.first, self.second, self.amount
         )
+        .map_err(Into::into)
     }
 }
 

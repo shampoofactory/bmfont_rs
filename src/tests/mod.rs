@@ -372,7 +372,7 @@ err!(
         small.info.face = "\x00".to_owned();
         text::to_string(&small)
     },
-    crate::Error::Io { .. }
+    crate::Error::UnsupportedValueEncoding { .. }
 );
 
 err!(
@@ -382,7 +382,7 @@ err!(
         small.pages[0] = "\x00".to_owned();
         text::to_string(&small)
     },
-    crate::Error::Io { .. }
+    crate::Error::UnsupportedValueEncoding { .. }
 );
 
 #[cfg(feature = "xml")]
@@ -393,7 +393,7 @@ err!(
         small.info.face = "\x00".to_owned();
         xml::to_string(&small)
     },
-    crate::Error::Io { .. }
+    crate::Error::UnsupportedValueEncoding { .. }
 );
 
 #[cfg(feature = "xml")]
@@ -404,7 +404,7 @@ err!(
         small.pages[0] = "\x00".to_owned();
         xml::to_string(&small)
     },
-    crate::Error::Io { .. }
+    crate::Error::UnsupportedValueEncoding { .. }
 );
 
 err!(

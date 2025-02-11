@@ -11,6 +11,7 @@ API:
 - add formal json support
 - xml/ text store methods now check for invalid string value encoding.
 - load methods now check for potentially unsafe value strings.
+- to_writer methods now all return crate::Result
 
 Bugfixes:
 - xml store methods now properly escape the following string characters: `\ ' < > &`.

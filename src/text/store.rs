@@ -76,21 +76,21 @@ pub fn to_vec(font: &Font) -> crate::Result<Vec<u8>> {
 ///     Ok(())
 /// }
 /// ```
-pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> io::Result<()> {
+pub fn to_writer<W: io::Write>(mut writer: W, font: &Font) -> crate::Result<()> {
     font.store(&mut writer)
 }
 
 trait StoreFnt {
-    fn store<W: io::Write>(&self, writer: W) -> io::Result<()>;
+    fn store<W: io::Write>(&self, writer: W) -> crate::Result<()>;
 }
 
 impl StoreFnt for Font {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W) -> crate::Result<()> {
         self.info.store(&mut writer)?;
         self.common.store(&mut writer)?;
-        self.pages.iter().enumerate().try_for_each(|(i, s)| {
-            write!(writer, "page id={} file=\"{}\"\r\n", i, check_value("page id", s)?)
-        })?;
+        for (i, page) in self.pages.iter().enumerate() {
+            write!(writer, "page id={} file=\"{}\"\r\n", i, check_value("page id", page)?)?;
+        }
         write!(writer, "chars count={}\r\n", self.chars.len())?;
         self.chars.iter().try_for_each(|u| u.store(&mut writer))?;
         write!(writer, "kernings count={}\r\n", self.kernings.len())?;
@@ -100,7 +100,7 @@ impl StoreFnt for Font {
 }
 
 impl StoreFnt for Char {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W) -> crate::Result<()> {
         write!(
             writer,
             "char id={:<4} \
@@ -125,11 +125,12 @@ impl StoreFnt for Char {
             self.page,
             u8::from(self.chnl)
         )
+        .map_err(Into::into)
     }
 }
 
 impl StoreFnt for Common {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W) -> crate::Result<()> {
         write!(
             writer,
             "common \
@@ -155,11 +156,12 @@ impl StoreFnt for Common {
             self.green_chnl as u8,
             self.blue_chnl as u8
         )
+        .map_err(Into::into)
     }
 }
 
 impl StoreFnt for Info {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W) -> crate::Result<()> {
         write!(
             writer,
             "info \
@@ -193,16 +195,18 @@ impl StoreFnt for Info {
             self.spacing.vertical,
             self.outline
         )
+        .map_err(Into::into)
     }
 }
 
 impl StoreFnt for Kerning {
-    fn store<W: io::Write>(&self, mut writer: W) -> io::Result<()> {
+    fn store<W: io::Write>(&self, mut writer: W) -> crate::Result<()> {
         write!(
             writer,
             "kerning first={:<3} second={:<3} amount={:<4}\r\n",
             self.first, self.second, self.amount
         )
+        .map_err(Into::into)
     }
 }
 
