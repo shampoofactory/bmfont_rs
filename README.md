@@ -95,6 +95,7 @@ This library defines unsafe strings as those containing ASCII control characters
 When attempting to load files containing ASCII control characters, an [UnsafeValueString](https://docs.rs/bmfont_rs/latest/bmfont_rs/enum.Error.html) error is thrown. This behavior can be disabled using the [LoadSettings](https://docs.rs/bmfont_rs/latest/bmfont_rs/struct.LoadSettings.html) struct.
 
 Any additional string/ input sanitization MUST be undertaken by users in accordance with their use cases.
+Take particular care that Font page file names from untrusted sources do not allow unintended file access, e.g. "../../secret/file.png".
 
 The BMFont format specifies strings at:
 - Font::info::face
