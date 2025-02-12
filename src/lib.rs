@@ -95,6 +95,7 @@ This library defines unsafe strings as those containing ASCII control characters
 When attempting to load files containing ASCII control characters, an [UnsafeValueString](crate::Error::UnsafeValueString) error is thrown. This behavior can be disabled using the [LoadSettings] struct.
 
 Any additional string/ input sanitization MUST be undertaken by users in accordance with their use cases.
+Take particular care that Font page file names from untrusted sources do not allow unintended file access, e.g. `../../secret/file.png`.
 
 The BMFont format specifies strings at:
 - [Info::face]
