@@ -3,7 +3,7 @@ pub mod load;
 pub mod tags;
 
 use crate::font::{Char, Common, Font, Info, Kerning, Page};
-use crate::{Error, LoadSettings};
+use crate::{Charset, Error, LoadSettings};
 
 use attributes::Attributes;
 use load::Load;
@@ -57,6 +57,9 @@ impl FontProto {
             }
         }
         if !settings.allow_string_control_characters {
+            if let Charset::Undefined(u) = &font.info.charset {
+                check_string("charset undefined", u)?;
+            }
             for page in &font.pages {
                 check_string("page id", page)?;
             }

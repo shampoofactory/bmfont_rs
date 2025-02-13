@@ -100,6 +100,7 @@ Take particular care that Font page file names from untrusted sources do not all
 The BMFont format specifies strings at:
 - Font::info::face
 - Font::pages 
+- Info::charset (Undefined)
 
 ## Examples: render
 

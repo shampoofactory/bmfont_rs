@@ -514,6 +514,12 @@ err!(
 );
 
 err!(
+    invalid_charset_string,
+    text::from_bytes(include_bytes!("../../data/bad/invalid_charset_string.txt").as_ref()),
+    crate::Error::UnsafeValueString { .. }
+);
+
+err!(
     bin_underflow,
     binary::from_bytes(include_bytes!("../../data/bad/underflow.bin").as_ref()),
     crate::Error::Parse { .. }
