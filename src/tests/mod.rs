@@ -329,6 +329,36 @@ fn json_binary_medium_cmp() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn binary_empty_from_reader() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/empty.bin");
+    assert_eq!(binary::from_reader(src.as_ref())?, Font::default());
+    Ok(())
+}
+
+#[test]
+fn text_empty_from_reader() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/empty.txt");
+    assert_eq!(text::from_reader(src.as_ref())?, Font::default());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_empty_from_reader() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/empty.json");
+    assert_eq!(json::from_reader(src.as_ref())?, Font::default());
+    Ok(())
+}
+
+#[cfg(feature = "xml")]
+#[test]
+fn xml_empty_from_reader() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/empty.xml");
+    assert_eq!(xml::from_reader(src.as_ref())?, Font::default());
+    Ok(())
+}
+
+#[test]
 fn validate_small() -> crate::Result<()> {
     small().validate_references()
 }
