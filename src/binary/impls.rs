@@ -341,8 +341,7 @@ impl UnpackDyn<V2> for Info {
                 let italic = bits.get(ITALIC);
                 let bold = bits.get(BOLD);
                 let _fixed_height = bits.get(FIXED_HEIGHT);
-                let charset =
-                    if unicode && charset == 0 { Charset::Null } else { Charset::Tagged(charset) };
+                let charset = if charset == 0 { Charset::Null } else { Charset::Tagged(charset) };
                 Ok(Self {
                     face,
                     size,

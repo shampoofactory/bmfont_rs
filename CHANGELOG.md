@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 
 API:
 - add formal json support
+- binary load now default 0 charset to Null instead of Tagged(0)
 - xml/ text/ binary store methods now check for invalid string value encoding.
 - load methods now check for potentially unsafe value strings.
 - to_writer methods now all return crate::Result
