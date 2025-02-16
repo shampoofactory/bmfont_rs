@@ -9,14 +9,14 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 
 API:
 - add formal json support
-- rename Error::InvalidBinaryEncoding to Error::InvalidCharsetEncoding
-- to_writer methods now all return crate::Result
+- rename Error::InvalidBinaryEncoding to Error::InvalidCharsetEncoding.
+- to_writer methods now all return crate::Result.
 - xml/ text/ binary load methods now check for unsafe strings.
 - xml/ text/ binary store methods now check for invalid string value encoding.
 
 Bugfixes:
 - medium file tests now use the correct files.
-- unicode/ charset edge cases are now consistent between load and store methods
+- unicode/ charset edge cases are now consistent between load and store methods.
 - xml store methods now properly escape the following string characters: `\ ' < > &`.
 
 Docs:
