@@ -9,22 +9,23 @@ This project adheres to [Semantic Versioning](http://semver.org/) as described i
 
 API:
 - add formal json support
-- binary load now default 0 charset to Null instead of Tagged(0)
-- xml/ text/ binary store methods now check for invalid string value encoding.
-- load methods now check for potentially unsafe value strings.
+- rename Error::InvalidBinaryEncoding to Error::InvalidCharsetEncoding
 - to_writer methods now all return crate::Result
+- xml/ text/ binary load methods now check for unsafe strings.
+- xml/ text/ binary store methods now check for invalid string value encoding.
 
 Bugfixes:
-- xml store methods now properly escape the following string characters: `\ ' < > &`.
 - medium file tests now use the correct files.
+- unicode/ charset edge cases are now consistent between load and store methods
+- xml store methods now properly escape the following string characters: `\ ' < > &`.
 
 Docs:
-- fix typos.
 - fix doc hyperlink.
+- fix typos.
 
 Internal improvements:
-- further simplify builder mechanics.
 - further leverage packing traits.
+- further simplify builder mechanics.
 
 ## [0.2.1] 1 Feb 2025
 
