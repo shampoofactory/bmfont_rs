@@ -342,6 +342,36 @@ fn text_empty_from_reader() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[test]
+fn binary_empty_store_load() -> Result<(), Box<dyn Error>> {
+    let bytes = binary::to_vec(&Font::default())?;
+    assert_eq!(binary::from_bytes(&bytes)?, Font::default());
+    Ok(())
+}
+
+#[test]
+fn text_empty_store_load() -> Result<(), Box<dyn Error>> {
+    let xml = text::to_string(&Font::default())?;
+    assert_eq!(text::from_str(&xml)?, Font::default());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn json_empty_store_load() -> Result<(), Box<dyn Error>> {
+    let json = json::to_string(&Font::default())?;
+    assert_eq!(json::from_str(&json)?, Font::default());
+    Ok(())
+}
+
+#[cfg(feature = "xml")]
+#[test]
+fn xml_empty_store_load() -> Result<(), Box<dyn Error>> {
+    let xml = xml::to_string(&Font::default())?;
+    assert_eq!(xml::from_str(&xml)?, Font::default());
+    Ok(())
+}
+
 #[cfg(feature = "json")]
 #[test]
 fn json_empty_from_reader() -> Result<(), Box<dyn Error>> {

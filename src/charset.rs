@@ -47,41 +47,66 @@ pub const BALTIC: u8 = 186;
 /// Non-Unicode character set encoding.
 ///
 /// Defines the character set encoding when using non-Unicode fonts.
-/// When Unicode is in use, this should be set to [Charset::Null].
+/// When Unicode is in use, that is [Info::unicode](crate::Info::unicode) is true, this should be set to [Charset::Null].
 ///
-/// When manually constructing, you'll probably want to use the `Tagged` variant with the required
-/// charset constant. See examples below.
+/// When manually constructing, use the [Charset::Tagged] variant with the required character set
+/// constant (tag). See examples below.
+///
+/// The [Charset::Undefined] variant holds a non-canonical string value. It is constructed by
+/// text-based format load methods when the string value is not a recognized tag. This undefined
+/// string value is discarded when converting to a canonical format e.g. binary.
 ///
 /// # Conversion rules: Binary
 ///
 /// The binary format `Charset` field is composed of a single byte: `u8`.
 ///
 /// `u8` to `Charset`:
-/// - `0 => Null | Tagged(0) | Undefined`, context sensitive
-/// - `u => Tagged(u)`
+/// - `0 if unicode  => Null`
+/// - `u             => Tagged(u)`
 ///
 /// `Charset` to `u8`:
-/// - `Null => 0`,
-/// - `Tagged(u) => u`
-/// - `Undefined => 0`
+/// - `Charset::Null | Charset::Undefined(_) => 0` (undefined value discarded)
+/// - `Tagged(u)                             => u`
 ///
 /// # Conversion rules: `String`
 ///
 /// `String` to `Charset`, in order of precedence:
-/// - `"" => Null`
-/// - `TAG => Tagged(tag)`, where `TAG` is a defined tag label and `tag` it's value
-/// - `u_string => Tagged(u)`, where `u_string` is a base-10 representation of `u`
-/// - `_  => Undefined(_)`, where `_` is any `String`
+/// - `""  => Null`
+/// - `TAG => Tagged(tag)`, where `TAG` is an defined character set and `tag` it's value
+/// - `u   => Tagged(u)`, where `u` is a `u8` integer string
+/// - `s   => Undefined(s)`, where `s` is any other string
 ///
 /// e.g. `"HANGUL" => Tagged(129)`
 ///
 /// `Charset` to `String`:
-/// - `Null => ""`
-/// - `Tagged(tag) => TAG`, where `TAG` is a defined tag label and `tag` it's value  
-/// - `Tagged(u) => u_string`, where `u_string` is a base-10 representation of `u`  
-/// - `Undefined(undefined) => undefined`
+/// - `Null         => ""`
+/// - `Tagged(tag)  => TAG`, where `TAG` is a defined character set and `tag` it's value  
+/// - `Tagged(u)    => u`, where `u` is a `u8` integer string
+/// - `Undefined(s) => s`, where `s` is any other string (non-canonical)
 ///
 /// e.g. `Tagged(163) => "VIETNAMESE"`
+///
+/// # Character set constants (tags)
+///
+/// - [ANSI]
+/// - [ARABIC]
+/// - [BALTIC]
+/// - [CHINESEBIG5]
+/// - [DEFAULT]
+/// - [EASTEUROPE]
+/// - [GB2312]
+/// - [GREEK]
+/// - [HANGUL]
+/// - [HEBREW]
+/// - [JOHAB]
+/// - [MAC]
+/// - [OEM]
+/// - [RUSSIAN]
+/// - [SHIFTJIS]
+/// - [SYMBOL]
+/// - [THAI]
+/// - [TURKISH]
+/// - [VIETNAMESE]
 ///
 /// # Examples
 ///
@@ -100,16 +125,6 @@ pub const BALTIC: u8 = 186;
 /// let charset: Charset = name.into();
 /// assert_eq!(charset, Charset::Tagged(SHIFTJIS));
 /// ```
-///
-/// ```
-/// # use bmfont_rs::Charset;
-/// # use bmfont_rs::ANSI;
-/// // Parse undefined charset string (case sensitive)
-/// let name = "Miniature Giraffe Encoding";
-/// let charset: Charset = name.into();
-/// assert_eq!(charset, Charset::Undefined("Miniature Giraffe Encoding".to_owned()));
-/// ```
-
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -119,7 +134,7 @@ pub const BALTIC: u8 = 186;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Charset {
     /// Used with Unicode character set encoding to indicate no other character set encoding
-    /// is in play.
+    /// is in use.
     Null,
     /// Used with BMFont defined character set encoding constants.
     Tagged(u8),

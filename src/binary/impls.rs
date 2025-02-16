@@ -272,21 +272,9 @@ impl PackDynLen<V2> for Info {
 impl PackDyn<V2> for Info {
     fn pack_dyn(&self, dst: &mut Vec<u8>) -> crate::Result<usize> {
         let mark = dst.len();
-        let charset = if self.unicode {
-            if self.charset == Charset::Null {
-                0
-            } else {
-                return Err(crate::Error::InvalidBinaryEncoding {
-                    unicode: self.unicode,
-                    charset: self.charset.clone(),
-                });
-            }
-        } else {
-            match self.charset {
-                Charset::Null => 0,
-                Charset::Tagged(u) => u,
-                Charset::Undefined(_) => 0,
-            }
+        let charset = match self.charset {
+            Charset::Null | Charset::Undefined(_) => 0,
+            Charset::Tagged(u) => u,
         };
         let mut bits = BitField(0);
         bits.set(SMOOTH, self.smooth);
@@ -341,7 +329,10 @@ impl UnpackDyn<V2> for Info {
                 let italic = bits.get(ITALIC);
                 let bold = bits.get(BOLD);
                 let _fixed_height = bits.get(FIXED_HEIGHT);
-                let charset = if charset == 0 { Charset::Null } else { Charset::Tagged(charset) };
+                let charset = match charset {
+                    0 if unicode => Charset::Null,
+                    u => Charset::Tagged(u),
+                };
                 Ok(Self {
                     face,
                     size,

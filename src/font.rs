@@ -216,7 +216,7 @@ impl Common {
 ///
 /// This block holds information on how the font was generated.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Info {
     /// This is the name of the true type font.
     pub face: String,
@@ -304,12 +304,31 @@ impl Info {
     #[allow(dead_code)]
     pub(crate) fn check_encoding(&self) -> crate::Result<()> {
         if self.unicode && self.charset != Charset::Null {
-            return Err(crate::Error::InvalidBinaryEncoding {
+            return Err(crate::Error::InvalidCharsetEncoding {
                 unicode: true,
                 charset: self.charset.clone(),
             });
         }
         Ok(())
+    }
+}
+
+impl Default for Info {
+    fn default() -> Self {
+        Self {
+            face: Default::default(),
+            size: Default::default(),
+            bold: Default::default(),
+            italic: Default::default(),
+            charset: Charset::Tagged(0),
+            unicode: Default::default(),
+            stretch_h: Default::default(),
+            smooth: Default::default(),
+            aa: Default::default(),
+            padding: Default::default(),
+            spacing: Default::default(),
+            outline: Default::default(),
+        }
     }
 }
 

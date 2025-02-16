@@ -99,8 +99,8 @@ pub enum Error {
         /// Block id.
         id: u8,
     },
-    /// Invalid binary block length (decode only).
-    InvalidBinaryEncoding {
+    /// Invalid character set encoding.
+    InvalidCharsetEncoding {
         /// True if Unicode.
         unicode: bool,
         /// Character set encoding.
@@ -251,8 +251,8 @@ impl fmt::Display for Error {
             Error::InvalidBinaryBlock { id } => {
                 write!(f, "invalid binary block: id: {}", id)
             }
-            Error::InvalidBinaryEncoding { unicode, charset } => {
-                write!(f, "invalid binary encoding: unicode: {}, charset: {}", unicode, charset)
+            Error::InvalidCharsetEncoding { unicode, charset } => {
+                write!(f, "invalid charset encoding: unicode: {}, charset: {}", unicode, charset)
             }
             Error::InvalidCharCount { specified, realized } => {
                 write!(f, "invalid char count: specified: {}, realized: {}", specified, realized)
