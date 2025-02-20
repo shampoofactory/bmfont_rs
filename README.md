@@ -8,7 +8,7 @@ files in text, binary, XML formats and more.
 
 ## Overview
 
-This crate provides building, manipulation, import, and export functions for BMFont descriptor files.
+This crate provides building, manipulation, import and export functions for BMFont descriptor files.
 
 The core data object is the [Font](https://docs.rs/bmfont_rs/latest/bmfont_rs/struct.Font.html).
 This struct holds, in its entirety, the data contained within a BMFont descriptor file.
