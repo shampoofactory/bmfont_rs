@@ -5,7 +5,7 @@ User visible changes to the project will be documented here.
 This project adheres to [Semantic Versioning](http://semver.org/) as described in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md).
 
 
-## In progress
+## [0.3.0] 20 Feb 2025
 
 API:
 - add formal json support
