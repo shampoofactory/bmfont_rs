@@ -6,6 +6,19 @@ BMFont font descriptor parsing library.
 Manipulate, import and export [BMFont](http://www.angelcode.com/products/bmfont/) descriptor
 files in text, binary, XML formats and more.
 
+## Documentation
+
+https://docs.rs/bmfont_rs/0.3.0/bmfont_rs/
+
+## Install
+
+Simply configure your `Cargo.toml`:
+
+```toml
+[dependencies]
+bmfont_rs = "0.3.0"
+```
+
 ## Overview
 
 This crate provides building, manipulation, import and export functions for BMFont descriptor files.
