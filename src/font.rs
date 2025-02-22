@@ -540,7 +540,7 @@ impl Parse for Packing {
 ///
 /// The texture channel/s where the character image is found.
 ///
-/// That the official BMFont documentations only specifies five possible combinations:
+/// The official BMFont documentation only specifies five possible combinations:
 /// red, blue, green, alpha and all.
 ///
 /// These are encoded as the constants:
