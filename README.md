@@ -180,7 +180,7 @@ cargo run --example xml --features xml
 
 ## Tests
 
-This crate is equipped numerous tests.
+This crate is equipped with numerous tests.
 
 Execute from the project root with:
 
