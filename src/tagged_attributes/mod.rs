@@ -44,7 +44,6 @@ const TB: u8 = b'\t';
 ///
 /// Supports ASCII/ UTF8/ ISO 8859 encodings. Should also work with ASCII type formats that maintain
 /// default values for control codes, `space` and `"` across all bytes.
-
 pub struct TaggedAttributes<'a> {
     bytes: &'a [u8],
     index: usize,
