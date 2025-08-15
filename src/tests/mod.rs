@@ -215,6 +215,89 @@ fn xml_small_string_escape() -> Result<(), Box<dyn Error>> {
 
 #[cfg(feature = "json")]
 #[test]
+fn serde_json_small_from_slice() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/small.json");
+    let font: Font = serde_json::from_slice(src)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_to_vec() -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_vec(&small())?;
+    let font: Font = serde_json::from_slice(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_to_vec_pretty() -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_vec_pretty(&small())?;
+    let font: Font = serde_json::from_slice(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_from_reader() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/ok/small.json");
+    let font: Font = serde_json::from_reader(src.as_ref())?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_to_writer() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    serde_json::to_writer(&mut vec, &small())?;
+    let font: Font = serde_json::from_slice(&vec)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_to_writer_pretty() -> Result<(), Box<dyn Error>> {
+    let mut vec = Vec::default();
+    serde_json::to_writer_pretty(&mut vec, &small())?;
+    let font: Font = serde_json::from_slice(&vec)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_from_str() -> Result<(), Box<dyn Error>> {
+    let src = include_str!("../../data/ok/small.json");
+    let font: Font = serde_json::from_str(src)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_to_string() -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_string(&small())?;
+    let font: Font = serde_json::from_str(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
+fn serde_json_small_to_string_pretty() -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_string_pretty(&small())?;
+    let font: Font = serde_json::from_str(&json)?;
+    assert_eq!(font, small());
+    Ok(())
+}
+
+#[cfg(feature = "json")]
+#[test]
 fn json_small_from_bytes() -> Result<(), Box<dyn Error>> {
     let src = include_bytes!("../../data/ok/small.json");
     let font: Font = json::from_bytes(src)?;
@@ -273,7 +356,7 @@ fn json_small_to_writer_pretty() -> Result<(), Box<dyn Error>> {
 #[test]
 fn json_small_from_str() -> Result<(), Box<dyn Error>> {
     let src = include_str!("../../data/ok/small.json");
-    let font: Font = json::from_str(src)?;
+    let font = json::from_str(src)?;
     assert_eq!(font, small());
     Ok(())
 }
@@ -282,7 +365,7 @@ fn json_small_from_str() -> Result<(), Box<dyn Error>> {
 #[test]
 fn json_small_to_string() -> Result<(), Box<dyn Error>> {
     let json = json::to_string(&small())?;
-    let font: Font = serde_json::de::from_str(&json)?;
+    let font = json::from_str(&json)?;
     assert_eq!(font, small());
     Ok(())
 }
@@ -291,7 +374,7 @@ fn json_small_to_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn json_small_to_string_pretty() -> Result<(), Box<dyn Error>> {
     let json = json::to_string_pretty(&small())?;
-    let font: Font = serde_json::de::from_str(&json)?;
+    let font = json::from_str(&json)?;
     assert_eq!(font, small());
     Ok(())
 }
