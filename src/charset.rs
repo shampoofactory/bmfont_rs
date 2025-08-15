@@ -80,7 +80,7 @@ pub const BALTIC: u8 = 186;
 ///
 /// `Charset` to `String`:
 /// - `Null         => ""`
-/// - `Tagged(tag)  => TAG`, where `TAG` is a defined character set and `tag` it's value  
+/// - `Tagged(tag)  => TAG`, where `TAG` is a defined character set and `tag` it's value
 /// - `Tagged(u)    => u`, where `u` is a `u8` integer string
 /// - `Undefined(s) => s`, where `s` is any other string (non-canonical)
 ///
@@ -128,7 +128,7 @@ pub const BALTIC: u8 = 186;
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
-    serde(from = "&str"),
+    serde(from = "String"),
     serde(into = "String")
 )]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -216,6 +216,12 @@ impl From<&str> for Charset {
                 Err(_) => Charset::Undefined(src.to_owned()),
             },
         }
+    }
+}
+
+impl From<String> for Charset {
+    fn from(s: String) -> Charset {
+        s.as_str().into()
     }
 }
 
