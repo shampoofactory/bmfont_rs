@@ -318,10 +318,8 @@ impl From<Error> for io::Error {
     fn from(err: Error) -> Self {
         match err {
             Error::Io { err } => err,
-            err @ Error::Internal { .. } => io::Error::new(io::ErrorKind::Other, err),
-            err @ Error::UnsupportedBinaryVersion { .. } => {
-                io::Error::new(io::ErrorKind::Other, err)
-            }
+            err @ Error::Internal { .. } => io::Error::other(err),
+            err @ Error::UnsupportedBinaryVersion { .. } => io::Error::other(err),
             err => io::Error::new(io::ErrorKind::InvalidData, err),
         }
     }
