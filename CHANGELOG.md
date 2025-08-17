@@ -5,7 +5,7 @@ User visible changes to the project will be documented here.
 This project adheres to [Semantic Versioning](http://semver.org/) as described in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md).
 
 
-## [0.3.1] TBA
+## [0.3.1] 17 Aug 2025
 
 Bugfixes:
 - serde_json::from_xxx methods now function correctly.

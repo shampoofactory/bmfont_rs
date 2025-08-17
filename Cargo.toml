@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 name = "bmfont_rs" 
 readme = "README.md" 
 repository = "https://github.com/shampoofactory/bmfont_rs" 
-version = "0.3.0" # remember to update READMEs
+version = "0.3.1" # remember to update READMEs
 
 [features]
 xml = ["roxmltree"]
