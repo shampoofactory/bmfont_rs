@@ -71,7 +71,7 @@ pub fn from_bytes(bytes: &[u8]) -> crate::Result<Font> {
 /// This function specifies Font import behavior, allowing us to import certain partially
 /// broken/ non-compliant BMFont files.
 pub fn from_bytes_ext(bytes: &[u8], settings: &LoadSettings) -> crate::Result<Font> {
-    FontBuilderText::default().load_bytes(bytes)?.build(settings)
+    FontBuilderText::default().load_bytes(bytes, settings)?.build(settings)
 }
 
 /// Read text format font.
@@ -117,7 +117,11 @@ pub struct FontBuilderText {
 }
 
 impl FontBuilderText {
-    pub fn load_bytes(mut self, bytes: &[u8]) -> crate::Result<FontBuilder> {
+    pub fn load_bytes(
+        mut self,
+        bytes: &[u8],
+        settings: &LoadSettings,
+    ) -> crate::Result<FontBuilder> {
         let mut attributes = TaggedAttributes::from_bytes(bytes);
         while let Some(Tag { tag, line }) = attributes.next_tag()? {
             match tag {
@@ -129,13 +133,18 @@ impl FontBuilderText {
                 b"kernings" => self.builder.set_kerning_count_attributes(line, &mut attributes),
                 b"kerning" => self.builder.add_kerning_attributes(&mut attributes),
                 tag => {
-                    let line = Some(attributes.line());
-                    let tag = String::from_utf8(tag.into()).map_err(|e| crate::Error::Parse {
-                        line,
-                        entity: "tag".to_owned(),
-                        err: e.to_string(),
-                    })?;
-                    Err(crate::Error::InvalidTag { line, tag })
+                    if settings.ignore_invalid_tags {
+                        Ok(())
+                    } else {
+                        let line = Some(attributes.line());
+                        let tag =
+                            String::from_utf8(tag.into()).map_err(|e| crate::Error::Parse {
+                                line,
+                                entity: "tag".to_owned(),
+                                err: e.to_string(),
+                            })?;
+                        Err(crate::Error::InvalidTag { line, tag })
+                    }
                 }
             }?;
         }

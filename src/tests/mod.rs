@@ -608,6 +608,13 @@ err!(
     crate::Error::InvalidTag { .. }
 );
 
+#[cfg(feature = "xml")]
+err!(
+    xml_text_invalid_tag,
+    xml::from_bytes(include_bytes!("../../data/bad/invalid_tag.xml").as_ref()),
+    crate::Error::InvalidTag { .. }
+);
+
 err!(
     text_invalid_value,
     text::from_bytes(include_bytes!("../../data/bad/bad_int.txt").as_ref()),
@@ -649,6 +656,23 @@ err!(
     binary::from_bytes(include_bytes!("../../data/bad/unsupported.bin").as_ref()),
     crate::Error::UnsupportedBinaryVersion { version: 0xFF }
 );
+
+#[test]
+fn load_settings_ignore_invalid_tags() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/bad/invalid_tag.txt");
+    let settings = LoadSettings::default().ignore_invalid_tags();
+    assert_eq!(text::from_bytes_ext(src, &settings)?, small());
+    Ok(())
+}
+
+#[cfg(feature = "xml")]
+#[test]
+fn xml_load_settings_ignore_invalid_tags() -> Result<(), Box<dyn Error>> {
+    let src = include_bytes!("../../data/bad/invalid_tag.xml");
+    let settings = LoadSettings::default().ignore_invalid_tags();
+    assert_eq!(xml::from_bytes_ext(src, &settings)?, small());
+    Ok(())
+}
 
 #[test]
 fn load_settings_ignore_char_count() -> Result<(), Box<dyn Error>> {

@@ -38,7 +38,7 @@ pub fn from_str(src: &str) -> crate::Result<Font> {
 /// This function specifies Font import behavior, allowing us to import certain partially
 /// broken/ non-compliant BMFont files.
 pub fn from_str_ext(src: &str, settings: &LoadSettings) -> crate::Result<Font> {
-    FontBuilderXml::default().load_str(src)?.build(settings)
+    FontBuilderXml::default().load_str(src, settings)?.build(settings)
 }
 
 /// Load XML format font.
@@ -125,7 +125,7 @@ pub struct FontBuilderXml {
 }
 
 impl FontBuilderXml {
-    pub fn load_str(mut self, src: &str) -> crate::Result<FontBuilder> {
+    pub fn load_str(mut self, src: &str, settings: &LoadSettings) -> crate::Result<FontBuilder> {
         let document = xml::Document::parse(src).map_err(|e| crate::Error::Parse {
             line: None,
             entity: "font".to_owned(),
@@ -134,11 +134,11 @@ impl FontBuilderXml {
         let root = document.root_element();
         check_tag_name(&root, "font")?;
         check_null_attributes(&root)?;
-        child_elements(&root, |root| self.root_child(root))?;
+        child_elements(&root, |root| self.root_child(root, settings.ignore_invalid_tags))?;
         Ok(self.builder)
     }
 
-    fn root_child(&mut self, node: &xml::Node) -> crate::Result<()> {
+    fn root_child(&mut self, node: &xml::Node, ignore_invalid_tags: bool) -> crate::Result<()> {
         debug_assert!(node.node_type() == xml::NodeType::Element);
         match node.tag_name().name() {
             "info" => self.info(node)?,
@@ -147,7 +147,9 @@ impl FontBuilderXml {
             "chars" => self.chars(node)?,
             "kernings" => self.kernings(node)?,
             tag_name => {
-                return Err(crate::Error::InvalidTag { line: None, tag: tag_name.to_owned() });
+                if !ignore_invalid_tags {
+                    return Err(crate::Error::InvalidTag { line: None, tag: tag_name.to_owned() });
+                }
             }
         }
         Ok(())

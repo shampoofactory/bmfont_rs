@@ -25,6 +25,8 @@ pub struct LoadSettings {
     pub allow_string_control_characters: bool,
     /// Ignore incorrect character and kerning counts.
     pub ignore_counts: bool,
+    /// Ignore invalid tags.
+    pub ignore_invalid_tags: bool,
 }
 
 impl LoadSettings {
@@ -35,6 +37,12 @@ impl LoadSettings {
     /// Set ignore_counts to true. Returns self.
     pub fn ignore_counts(mut self) -> Self {
         self.ignore_counts = true;
+        self
+    }
+
+    /// Set ignore_invalid_tags to true. Returns self.
+    pub fn ignore_invalid_tags(mut self) -> Self {
+        self.ignore_invalid_tags = true;
         self
     }
 
