@@ -8,7 +8,7 @@ files in text, binary, XML formats and more.
 
 ## Documentation
 
-https://docs.rs/bmfont_rs/0.3.1/bmfont_rs/
+https://docs.rs/bmfont_rs/0.4.0/bmfont_rs/
 
 ## Install
 
@@ -16,7 +16,7 @@ Simply configure your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bmfont_rs = "0.3.1"
+bmfont_rs = "0.4.0"
 ```
 
 ## Overview
